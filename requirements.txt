@@ -1,0 +1,3 @@
+scikit-learn
+flwr>=1.24,<2
+numpy>=1.26

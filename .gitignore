@@ -1,0 +1,27 @@
+# Dataset inputs and generated processing artifacts
+/data/
+
+# Python environments, bytecode, and test caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Temporary files and logs
+*.tmp
+*.temp
+*.log
+*.swp
+*.swo
+
+# Local credentials and private keys
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx

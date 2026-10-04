@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "policy_id": "trustmesh_shared_features_v1",
+  "restricted_fields": ["src_ip", "dst_ip", "srcip", "dstip", "id.orig_h", "id.resp_h", "uid", "record_id", "Stime", "Ltime", "ts"],
+  "canonical_shared_feature_exclusions": ["src_ip", "dst_ip", "srcip", "dstip", "id.orig_h", "id.resp_h", "uid", "record_id", "id", "stcpb", "dtcpb", "Stime", "Ltime", "ts", "attack_cat", "label", "Label", "label_class_original", "label_class_normalized", "label_binary", "detailedlabel"],
+  "label_fields_never_features": true,
+  "ip_handling": "restricted_staging_only_no_hashing",
+  "dp": false,
+  "secure_aggregation": false,
+  "encryption": false,
+  "federated_learning": false
+}

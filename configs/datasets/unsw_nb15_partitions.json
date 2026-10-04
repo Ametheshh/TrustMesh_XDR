@@ -1,0 +1,10 @@
+{
+  "dataset_id": "unsw_nb15_partitions",
+  "schema_version": "1.0",
+  "adapter_version": "1.0",
+  "source_root": "data/UNSW-NB15",
+  "ordered_columns": ["srcip", "sport", "dstip", "dsport", "proto", "state", "dur", "sbytes", "dbytes", "sttl", "dttl", "sloss", "dloss", "service", "Sload", "Dload", "Spkts", "Dpkts", "swin", "dwin", "stcpb", "dtcpb", "smeansz", "dmeansz", "trans_depth", "res_bdy_len", "Sjit", "Djit", "Stime", "Ltime", "Sintpkt", "Dintpkt", "tcprtt", "synack", "ackdat", "is_sm_ips_ports", "ct_state_ttl", "ct_flw_http_mthd", "is_ftp_login", "ct_ftp_cmd", "ct_srv_src", "ct_srv_dst", "ct_dst_ltm", "ct_src_ltm", "ct_src_dport_ltm", "ct_dst_sport_ltm", "ct_dst_src_ltm", "attack_cat", "Label"],
+  "label_fields": ["attack_cat", "Label"],
+  "restricted_fields": ["srcip", "dstip", "Stime", "Ltime"],
+  "canonical_mapping": {"dur": "duration", "proto": "protocol", "Spkts": "packets_src_to_dst", "Dpkts": "packets_dst_to_src", "sbytes": "bytes_src_to_dst", "dbytes": "bytes_dst_to_src", "tcprtt": "tcp_rtt"}
+}

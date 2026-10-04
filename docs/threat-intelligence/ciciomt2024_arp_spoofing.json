@@ -1,0 +1,23 @@
+{
+  "source": {
+    "dataset": "CICIoMT2024 WiFi and MQTT",
+    "dataset_id": "ciciomt2024_wifi_mqtt",
+    "source_label": "ARP_Spoofing",
+    "normalized_label": "ciciomt2024_wifi_mqtt:arp_spoofing"
+  },
+  "mapping": {
+    "attack_technique_id": "T1557.002",
+    "attack_technique_name": "ARP Cache Poisoning",
+    "evidence_basis": "dataset_label",
+    "evidence_limitation": "Dataset-label-derived mapping only. The current project has no packet-level evidence proving ARP cache poisoning.",
+    "confidence": "Qualified: label-level association; not independently verified from packet behavior."
+  },
+  "sigma": {
+    "status": "not_generated",
+    "limitation": "The available contract provides dataset labels and aggregate flow features, not packet-level ARP cache-poisoning event fields. No defensible event condition can be expressed from these fields."
+  },
+  "stix": {
+    "file": "ciciomt2024_arp_spoofing.stix.json",
+    "format": "STIX 2.1 bundle"
+  }
+}

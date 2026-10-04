@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0",
+  "benign_values": ["benign", "normal", "0"],
+  "benign_values_by_dataset": {
+    "ciciot23": ["BenignTraffic"]
+  },
+  "binary_class_mappings": {
+    "ctu_sme_zeek": {
+      "benign": ["Benign"],
+      "attack": ["Malicious"],
+      "unresolved": ["Unknown"],
+      "unmapped": "unresolved"
+    }
+  },
+  "class_mappings": {
+    "identity_datasets": {
+      "ciciot23": true,
+      "ciciomt2024_wifi_mqtt": true,
+      "unsw_nb15_named": true,
+      "unsw_nb15_partitions": true,
+      "ctu_sme_zeek": true
+    }
+  }
+}

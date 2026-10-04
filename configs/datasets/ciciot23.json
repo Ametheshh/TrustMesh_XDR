@@ -1,0 +1,10 @@
+{
+  "dataset_id": "ciciot23",
+  "schema_version": "1.0",
+  "adapter_version": "1.0",
+  "source_root": "data/CICIOT23",
+  "split_by_parent": {"train": "train", "validation": "validation", "test": "test"},
+  "label_fields": ["label"],
+  "columns": ["flow_duration", "Header_Length", "Protocol Type", "Duration", "Rate", "Srate", "Drate", "fin_flag_number", "syn_flag_number", "rst_flag_number", "psh_flag_number", "ack_flag_number", "ece_flag_number", "cwr_flag_number", "ack_count", "syn_count", "fin_count", "urg_count", "rst_count", "HTTP", "HTTPS", "DNS", "Telnet", "SMTP", "SSH", "IRC", "TCP", "UDP", "DHCP", "ARP", "ICMP", "IPv", "LLC", "Tot sum", "Min", "Max", "AVG", "Std", "Tot size", "IAT", "Number", "Magnitue", "Radius", "Covariance", "Variance", "Weight", "label"],
+  "canonical_mapping": {"flow_duration": "duration", "Rate": "flow_rate", "IAT": "interarrival_time", "TCP": "protocol_tcp_indicator", "UDP": "protocol_udp_indicator"}
+}

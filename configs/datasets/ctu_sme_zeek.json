@@ -1,0 +1,12 @@
+{
+  "dataset_id": "ctu_sme_zeek",
+  "schema_version": "1.0",
+  "adapter_version": "1.0",
+  "source_root": "data/CTU-SME/conn",
+  "separator": "\\x09",
+  "columns": ["ts", "uid", "id.orig_h", "id.orig_p", "id.resp_h", "id.resp_p", "proto", "service", "duration", "orig_bytes", "resp_bytes", "conn_state", "local_orig", "local_resp", "missed_bytes", "history", "orig_pkts", "orig_ip_bytes", "resp_pkts", "resp_ip_bytes", "tunnel_parents", "label", "detailedlabel"],
+  "types": ["time", "string", "addr", "port", "addr", "port", "enum", "string", "interval", "count", "count", "string", "bool", "bool", "count", "string", "count", "count", "count", "count", "set[string]", "string", "string"],
+  "label_fields": ["label", "detailedlabel"],
+  "restricted_fields": ["uid", "id.orig_h", "id.orig_p", "id.resp_h", "id.resp_p", "ts"],
+  "canonical_mapping": {"proto": "protocol", "duration": "duration", "orig_bytes": "bytes_src_to_dst", "resp_bytes": "bytes_dst_to_src", "orig_pkts": "packets_src_to_dst", "resp_pkts": "packets_dst_to_src", "conn_state": "connection_state"}
+}

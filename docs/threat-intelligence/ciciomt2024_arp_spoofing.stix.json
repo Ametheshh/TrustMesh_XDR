@@ -1,0 +1,32 @@
+{
+  "type": "bundle",
+  "id": "bundle--c9a1b72c-8312-4f7e-a134-000000000001",
+  "spec_version": "2.1",
+  "objects": [
+    {
+      "type": "attack-pattern",
+      "spec_version": "2.1",
+      "id": "attack-pattern--c9a1b72c-8312-4f7e-a134-000000000002",
+      "created": "2026-10-04T00:00:00.000Z",
+      "modified": "2026-10-04T00:00:00.000Z",
+      "name": "ARP Cache Poisoning",
+      "external_references": [
+        {
+          "source_name": "mitre-attack",
+          "external_id": "T1557.002",
+          "url": "https://attack.mitre.org/techniques/T1557/002/"
+        }
+      ]
+    },
+    {
+      "type": "note",
+      "spec_version": "2.1",
+      "id": "note--c9a1b72c-8312-4f7e-a134-000000000003",
+      "created": "2026-10-04T00:00:00.000Z",
+      "modified": "2026-10-04T00:00:00.000Z",
+      "authors": ["TrustMesh XDR"],
+      "object_refs": ["attack-pattern--c9a1b72c-8312-4f7e-a134-000000000002"],
+      "content": "Provenance: dataset=CICIoMT2024 WiFi and MQTT; dataset_id=ciciomt2024_wifi_mqtt; exact source label=ARP_Spoofing; normalized label=ciciomt2024_wifi_mqtt:arp_spoofing. Evidence basis: dataset_label. Limitation: the current project has no packet-level evidence proving ARP cache poisoning. Qualification: label-level association only; not independently verified from packet behavior."
+    }
+  ]
+}
