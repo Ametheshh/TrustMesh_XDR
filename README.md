@@ -65,7 +65,7 @@ No Sigma rule is generated. The available dataset features do not establish a de
 
 ## Reproducibility and demo
 
-Use the ordered commands and local-data checklist in [Reproduction guide](docs/reproduction.md). The guide distinguishes the local Logistic Regression baseline, one-feature in-memory FedAvg demo, five-feature Milestone 5/7 evaluators, static threat-intelligence artifacts, SHAP example, and test suite. A clean checkout does not contain dataset inputs or generated canonical smoke artifacts.
+Open the [offline Dashboard v1](docs/dashboard.html) directly in a browser for a static summary of the existing results. Use the ordered commands and local-data checklist in [Reproduction guide](docs/reproduction.md) to run the demos. A clean checkout does not contain dataset inputs or generated canonical smoke artifacts.
 
 ## Testing
 

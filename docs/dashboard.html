@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Offline TrustMesh XDR research proof-of-concept results and limitations.">
+  <title>TrustMesh XDR | Research Dashboard</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172638;
+      --muted: #526579;
+      --paper: #f3f6f9;
+      --surface: #ffffff;
+      --line: #d9e2ea;
+      --navy: #102b46;
+      --teal: #087e8b;
+      --teal-soft: #e5f5f5;
+      --blue-soft: #edf3fa;
+      --amber: #80510b;
+      --amber-soft: #fff4dc;
+      --red: #8e3434;
+      --red-soft: #fff0ef;
+      --green: #1c654d;
+      --green-soft: #eaf6ef;
+      --shadow: 0 12px 34px rgba(16, 43, 70, .07);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font: 16px/1.55 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    a { color: #075d78; text-underline-offset: .18em; }
+    a:hover { color: #063e58; }
+    a:focus-visible { outline: 3px solid #f3b747; outline-offset: 3px; }
+    .shell { width: min(1180px, calc(100% - 36px)); margin: 0 auto; }
+    .hero {
+      background: linear-gradient(125deg, #102b46 0%, #154962 65%, #087e8b 100%);
+      color: white;
+      padding: 52px 0 38px;
+    }
+    .eyebrow {
+      margin: 0 0 10px;
+      color: #b8e9e9;
+      font-size: .76rem;
+      font-weight: 800;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+    h1 { max-width: 850px; margin: 0; font-size: clamp(2.15rem, 5vw, 3.6rem); line-height: 1.05; letter-spacing: -.035em; }
+    .hero-copy { max-width: 780px; margin: 18px 0 0; color: #e1edf4; font-size: 1.08rem; }
+    .status-line { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+    .pill, .tag {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      padding: 5px 11px;
+      font-size: .7rem;
+      font-weight: 800;
+      letter-spacing: .055em;
+      line-height: 1.4;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .pill { border-color: rgba(255,255,255,.35); background: rgba(255,255,255,.1); color: white; }
+    .tag.measured { color: #14533f; background: var(--green-soft); border-color: #bfdfcf; }
+    .tag.poc { color: #075766; background: var(--teal-soft); border-color: #b8e2e3; }
+    .tag.limit { color: #793232; background: var(--red-soft); border-color: #f0c9c5; }
+    .tag.context { color: #68440d; background: var(--amber-soft); border-color: #f0d8a2; }
+    .nav-wrap { position: sticky; top: 0; z-index: 5; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.96); }
+    nav { display: flex; gap: 5px; overflow-x: auto; padding: 9px 0; }
+    nav a { flex: 0 0 auto; border-radius: 7px; color: #32485d; font-size: .88rem; font-weight: 700; padding: 8px 12px; text-decoration: none; }
+    nav a:hover { background: var(--blue-soft); color: var(--navy); }
+    main { padding: 28px 0 60px; }
+    section { scroll-margin-top: 72px; margin: 0 0 24px; }
+    .panel { overflow: hidden; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); box-shadow: var(--shadow); }
+    .section-head { padding: 27px 29px 18px; border-bottom: 1px solid #e8edf2; }
+    .section-kicker { margin: 0 0 8px; color: var(--teal); font-size: .72rem; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
+    h2 { margin: 0; color: var(--navy); font-size: clamp(1.45rem, 3vw, 2rem); letter-spacing: -.025em; }
+    h3 { margin: 0 0 8px; color: var(--navy); font-size: 1.04rem; }
+    p { margin: 9px 0; }
+    .section-body { padding: 24px 29px 29px; }
+    .muted { color: var(--muted); }
+    .small { font-size: .88rem; }
+    .grid { display: grid; gap: 14px; }
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .card { border: 1px solid var(--line); border-radius: 11px; background: #fbfcfd; padding: 19px; }
+    .card p:last-child { margin-bottom: 0; }
+    .stat { display: block; margin: 5px 0 2px; color: var(--navy); font-size: 1.55rem; font-weight: 800; letter-spacing: -.035em; }
+    .stat-label { color: var(--muted); font-size: .84rem; }
+    .kpi-card { display: flex; min-height: 170px; flex-direction: column; align-items: flex-start; gap: 11px; }
+    .kpi-card .stat { margin: 0; font-size: clamp(1.25rem, 2vw, 1.55rem); overflow-wrap: anywhere; }
+    .kpi-card .stat-label { margin-top: auto; }
+    .callout { margin-top: 16px; border-left: 4px solid var(--teal); border-radius: 0 9px 9px 0; background: var(--teal-soft); padding: 13px 16px; }
+    .callout.warning { border-left-color: #bb7b11; background: var(--amber-soft); }
+    .callout.caution { border-left-color: #a64343; background: var(--red-soft); }
+    .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 0 4px; }
+    .flow span { border: 1px solid #cbd8e3; border-radius: 7px; background: white; padding: 7px 10px; font-size: .84rem; font-weight: 700; }
+    .flow b { color: var(--teal); font-size: 1.1rem; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 9px; }
+    table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+    .results-table { min-width: 990px; table-layout: fixed; }
+    .results-table th:nth-child(1), .results-table td:nth-child(1) { width: 205px; }
+    .results-table th:nth-child(2), .results-table td:nth-child(2) { width: 105px; }
+    .results-table th:nth-child(n+3), .results-table td:nth-child(n+3) { width: 136px; }
+    th, td { padding: 11px 12px; border-bottom: 1px solid #e7edf2; text-align: left; vertical-align: top; }
+    th { background: #edf3f7; color: #30485d; font-size: .75rem; letter-spacing: .035em; white-space: nowrap; }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr:nth-child(even) { background: #fafcfd; }
+    td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .milestone { color: var(--navy); font-weight: 800; white-space: nowrap; }
+    .model { font-weight: 700; white-space: nowrap; }
+    .failure td { background: var(--red-soft); }
+    .mt-md { margin-top: 15px; }
+    .mt-lg { margin-top: 18px; }
+    .spaced-heading { margin-top: 22px; }
+    .card-heading { margin-top: 12px; }
+    .subheading { margin-top: 24px; }
+    .spaced-label { margin-top: 21px; }
+    .link-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 15px; }
+    .link-button { display: inline-flex; border: 1px solid #b7cbd8; border-radius: 8px; background: white; padding: 8px 11px; font-size: .86rem; font-weight: 700; text-decoration: none; }
+    .link-button:hover { background: var(--blue-soft); }
+    .metric-list { display: grid; gap: 11px; }
+    .metric-row { display: grid; grid-template-columns: minmax(145px, 1.25fr) minmax(90px, 2fr) 64px; align-items: center; gap: 12px; }
+    .metric-name { font-size: .88rem; font-weight: 700; overflow-wrap: anywhere; }
+    .bar-track { height: 12px; overflow: hidden; border-radius: 99px; background: #e8eef3; }
+    .bar-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #087e8b, #42a5a5); }
+    .bar-100 { width: 100%; }
+    .bar-60 { width: 60.3%; }
+    .bar-22 { width: 22.4%; }
+    .bar-12 { width: 11.6%; }
+    .bar-7 { width: 7.2%; }
+    .metric-value { color: var(--navy); font-size: .86rem; font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; }
+    .case-label { display: flex; flex-wrap: wrap; align-items: center; column-gap: 12px; row-gap: 8px; margin-bottom: 12px; }
+    .contrib { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; }
+    .contrib span { border: 1px solid #d7e1e9; border-radius: 7px; background: white; padding: 5px 8px; font-size: .78rem; }
+    .positive { color: #126348; }
+    .negative { color: #8e3434; }
+    .privacy-card { min-height: 100%; }
+    .privacy-card.implemented { border-top: 4px solid #2c8a68; }
+    .privacy-card.poc-card { border-top: 4px solid #168596; }
+    .privacy-card.limited { border-top: 4px solid #b44a4a; }
+    footer { padding: 22px 0 34px; color: var(--muted); font-size: .84rem; }
+    code { border-radius: 4px; background: #eef2f5; padding: 2px 5px; font-size: .92em; }
+    @media (max-width: 800px) {
+      .grid.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid.three { grid-template-columns: 1fr; }
+      .metric-row { grid-template-columns: minmax(115px, 1fr) minmax(70px, 1.4fr) 58px; gap: 8px; }
+    }
+    @media (max-width: 560px) {
+      .shell { width: min(100% - 22px, 1180px); }
+      .hero { padding: 38px 0 30px; }
+      .section-head { padding: 20px 18px 14px; }
+      .section-body { padding: 18px 18px 22px; }
+      .kpi-card { min-height: 150px; }
+      .grid.two, .grid.four { grid-template-columns: 1fr; }
+      .metric-row { grid-template-columns: 1fr 64px; }
+      .bar-track { grid-column: 1 / -1; grid-row: 2; }
+      .metric-value { grid-column: 2; grid-row: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="shell">
+      <p class="eyebrow">Offline cybersecurity research demonstration</p>
+      <h1>TrustMesh XDR</h1>
+      <p class="hero-copy">A research proof of concept for collaborative network-threat detection, with local classifiers, controlled federated evaluations, qualified threat-intelligence artifacts, and one model-explanation example.</p>
+      <div class="status-line" aria-label="Project status">
+        <span class="pill">Research POC</span>
+        <span class="pill">Documented results</span>
+        <span class="pill">Not a live SOC</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="nav-wrap">
+    <nav class="shell" aria-label="Dashboard sections">
+      <a href="#overview">Overview</a>
+      <a href="#federated">Federated Learning</a>
+      <a href="#threat-intelligence">Threat Intelligence</a>
+      <a href="#shap">SHAP Explainability</a>
+      <a href="#privacy">Privacy / Limitations</a>
+    </nav>
+  </div>
+
+  <main class="shell">
+    <section id="overview" class="panel" aria-labelledby="overview-title">
+      <div class="section-head">
+        <p class="section-kicker">A · Overview</p>
+        <h2 id="overview-title">An offline research POC</h2>
+      </div>
+      <div class="section-body">
+        <p>This page summarizes already documented experiments and static artifacts. It does not collect telemetry, run models, receive alerts, or display live operational state. CTU-SME and UNSW-NB15 are dataset-derived simulated clients, not real organizations.</p>
+        <div class="grid four mt-lg">
+          <article class="card kpi-card"><span class="tag measured">Measured</span><strong class="stat">M4, M5, M7</strong><span class="stat-label">Held-out local vs global evaluations</span></article>
+          <article class="card kpi-card"><span class="tag poc">Research POC</span><strong class="stat">Flower FedAvg</strong><span class="stat-label">Controlled one-round experiments</span></article>
+          <article class="card kpi-card"><span class="tag poc">Research POC</span><strong class="stat">STIX 2.1</strong><span class="stat-label">One qualified static mapping artifact</span></article>
+          <article class="card kpi-card"><span class="tag poc">Research POC</span><strong class="stat">SHAP</strong><span class="stat-label">One CTU-SME local model explanation</span></article>
+        </div>
+        <h3 class="spaced-heading">Architecture summary</h3>
+        <div class="flow" aria-label="Data pipeline flow">
+          <span>Local source data</span><b aria-hidden="true">→</b>
+          <span>Dataset adapter</span><b aria-hidden="true">→</b>
+          <span>Sanitize and normalize</span><b aria-hidden="true">→</b>
+          <span>Canonical records</span><b aria-hidden="true">→</b>
+          <span>Local / simulated client evaluation</span>
+        </div>
+        <div class="callout warning"><strong>Scope:</strong> This is an offline/research demonstration, not a live SOC, live network monitor, or alerting system. Metrics below are fixed results copied from the linked milestone reports.</div>
+      </div>
+    </section>
+
+    <section id="federated" class="panel" aria-labelledby="federated-title">
+      <div class="section-head">
+        <p class="section-kicker">B · Federated Learning</p>
+        <h2 id="federated-title">Local vs global held-out results</h2>
+      </div>
+      <div class="section-body">
+        <div class="case-label"><span class="tag measured">Measured results</span><span class="muted small">Mean ± sample standard deviation across seeds 42, 43, and 44.</span></div>
+        <p class="small muted">Each row is reported within its milestone setup. M4 uses the designated one-feature <code>total_packets</code> POC. M5 uses five mapped connection features with <code>log1p</code>. M7 uses those same five features with one scaler fitted on combined training partitions only. These setups are not silently reconciled into one experiment.</p>
+        <div class="table-wrap">
+          <table class="results-table">
+            <thead><tr><th>Milestone / representation</th><th>Client evaluation</th><th>Model</th><th>Precision</th><th>Recall</th><th>F1</th><th>Balanced accuracy</th></tr></thead>
+            <tbody>
+              <tr><td class="milestone">M4 · total_packets</td><td>CTU-SME</td><td class="model">Local</td><td class="num">0.7868 ± 0.0044</td><td class="num">0.9966 ± 0.0015</td><td class="num">0.8794 ± 0.0032</td><td class="num">0.6851 ± 0.0083</td></tr>
+              <tr><td class="milestone">M4 · total_packets</td><td>CTU-SME</td><td class="model">Global</td><td class="num">0.7868 ± 0.0044</td><td class="num">0.9966 ± 0.0015</td><td class="num">0.8794 ± 0.0032</td><td class="num">0.6851 ± 0.0083</td></tr>
+              <tr><td class="milestone">M4 · total_packets</td><td>UNSW-NB15</td><td class="model">Local</td><td class="num">0.9872 ± 0.0035</td><td class="num">0.5433 ± 0.0106</td><td class="num">0.7009 ± 0.0097</td><td class="num">0.6322 ± 0.0411</td></tr>
+              <tr><td class="milestone">M4 · total_packets</td><td>UNSW-NB15</td><td class="model">Global</td><td class="num">0.9887 ± 0.0021</td><td class="num">0.5409 ± 0.0104</td><td class="num">0.6992 ± 0.0092</td><td class="num">0.6480 ± 0.0255</td></tr>
+              <tr><td class="milestone">M5 · five features, log1p</td><td>CTU-SME</td><td class="model">Local</td><td class="num">0.9958 ± 0.0022</td><td class="num">0.9973 ± 0.0008</td><td class="num">0.9966 ± 0.0015</td><td class="num">0.9938 ± 0.0030</td></tr>
+              <tr><td class="milestone">M5 · five features, log1p</td><td>CTU-SME</td><td class="model">Global</td><td class="num">0.9961 ± 0.0018</td><td class="num">0.9973 ± 0.0008</td><td class="num">0.9967 ± 0.0013</td><td class="num">0.9940 ± 0.0026</td></tr>
+              <tr><td class="milestone">M5 · five features, log1p</td><td>UNSW-NB15</td><td class="model">Local</td><td class="num">0.9894 ± 0.0006</td><td class="num">0.9214 ± 0.0065</td><td class="num">0.9542 ± 0.0033</td><td class="num">0.7634 ± 0.0099</td></tr>
+              <tr class="failure"><td class="milestone">M5 · five features, log1p</td><td>UNSW-NB15</td><td class="model">Global</td><td class="num">0.0000 ± 0.0000</td><td class="num">0.0000 ± 0.0000</td><td class="num">0.0000 ± 0.0000</td><td class="num">0.5000 ± 0.0000</td></tr>
+              <tr><td class="milestone">M7 · five + shared scaler</td><td>CTU-SME</td><td class="model">Local</td><td class="num">0.9905 ± 0.0032</td><td class="num">0.9973 ± 0.0008</td><td class="num">0.9939 ± 0.0018</td><td class="num">0.9874 ± 0.0040</td></tr>
+              <tr><td class="milestone">M7 · five + shared scaler</td><td>CTU-SME</td><td class="model">Global</td><td class="num">0.9879 ± 0.0023</td><td class="num">0.9973 ± 0.0008</td><td class="num">0.9926 ± 0.0014</td><td class="num">0.9843 ± 0.0030</td></tr>
+              <tr><td class="milestone">M7 · five + shared scaler</td><td>UNSW-NB15</td><td class="model">Local</td><td class="num">0.9895 ± 0.0005</td><td class="num">0.9180 ± 0.0078</td><td class="num">0.9524 ± 0.0040</td><td class="num">0.7651 ± 0.0066</td></tr>
+              <tr><td class="milestone">M7 · five + shared scaler</td><td>UNSW-NB15</td><td class="model">Global</td><td class="num">0.9971 ± 0.0026</td><td class="num">0.5329 ± 0.0061</td><td class="num">0.6946 ± 0.0058</td><td class="num">0.7358 ± 0.0299</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout caution"><strong>Milestone 5 UNSW result:</strong> the global model predicted all 2,000 held-out rows as benign in each seed. Milestone 7's shared scaler removed the all-benign prediction pattern but did not close the performance gap to the UNSW local model.</div>
+        <article class="card mt-md">
+          <div class="case-label"><span class="tag poc">Milestone 6 diagnosis</span><span class="tag context">Supported diagnosis, not proof</span></div>
+          <p>Different feature distributions and feature-to-label behavior, along with seed-42 coefficient differences and cross-client score behavior, support client heterogeneity as the diagnosis. FedAvg training counts were close: 7,752 CTU-SME rows (49.21%) and 8,000 UNSW-NB15 rows (50.79%). The report does not establish heterogeneity as the sole cause.</p>
+        </article>
+        <div class="link-row">
+          <a class="link-button" href="federated_local_global_milestone4.md">Milestone 4 report</a>
+          <a class="link-button" href="federated_shared_features_milestone5.md">Milestone 5 report</a>
+          <a class="link-button" href="federated_heterogeneity_milestone6.md">Milestone 6 diagnosis</a>
+          <a class="link-button" href="federated_shared_normalization_milestone7.md">Milestone 7 report</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="threat-intelligence" class="panel" aria-labelledby="threat-title">
+      <div class="section-head">
+        <p class="section-kicker">C · Threat Intelligence</p>
+        <h2 id="threat-title">Qualified label-level mapping</h2>
+      </div>
+      <div class="section-body">
+        <div class="grid two">
+          <article class="card">
+            <span class="tag poc">Static research artifact</span>
+            <h3 class="card-heading">ARP Spoofing</h3>
+            <p><strong>MITRE ATT&amp;CK T1557.002</strong><br>ARP Cache Poisoning</p>
+            <p class="muted small">Source: CICIoMT2024 WiFi and MQTT; source label <code>ARP_Spoofing</code>.</p>
+            <p><strong>Evidence qualification:</strong> dataset-label-derived association only. The project has no packet-level evidence proving ARP cache poisoning; it is not independently verified from packet behavior.</p>
+          </article>
+          <article class="card">
+            <span class="tag limit">Sigma · not generated</span>
+            <h3 class="card-heading">No defensible event condition</h3>
+            <p>The available contract provides dataset labels and aggregate flow features, not packet-level ARP cache-poisoning event fields. A dataset feature name is not automatically a SIEM or log-source field.</p>
+            <p><strong>STIX:</strong> static STIX 2.1 bundle, not an operational exchange service.</p>
+          </article>
+        </div>
+        <div class="link-row">
+          <a class="link-button" href="threat-intelligence/ciciomt2024_arp_spoofing.json">Open ATT&amp;CK mapping JSON</a>
+          <a class="link-button" href="threat-intelligence/ciciomt2024_arp_spoofing.stix.json">Open STIX 2.1 bundle</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="shap" class="panel" aria-labelledby="shap-title">
+      <div class="section-head">
+        <p class="section-kicker">D · SHAP Explainability</p>
+        <h2 id="shap-title">What the CTU-SME local model used</h2>
+      </div>
+      <div class="section-body">
+        <div class="case-label"><span class="tag measured">Existing held-out analysis</span><span class="muted small">Mean absolute SHAP contribution, logit units; 200 balanced held-out flows.</span></div>
+        <div class="metric-list" aria-label="Mean absolute SHAP importance">
+          <div class="metric-row"><span class="metric-name">bytes_src_to_dst</span><div class="bar-track"><div class="bar-fill bar-100"></div></div><span class="metric-value">3.675</span></div>
+          <div class="metric-row"><span class="metric-name">bytes_dst_to_src</span><div class="bar-track"><div class="bar-fill bar-60"></div></div><span class="metric-value">2.217</span></div>
+          <div class="metric-row"><span class="metric-name">packets_src_to_dst</span><div class="bar-track"><div class="bar-fill bar-22"></div></div><span class="metric-value">0.825</span></div>
+          <div class="metric-row"><span class="metric-name">duration</span><div class="bar-track"><div class="bar-fill bar-12"></div></div><span class="metric-value">0.426</span></div>
+          <div class="metric-row"><span class="metric-name">packets_dst_to_src</span><div class="bar-track"><div class="bar-fill bar-7"></div></div><span class="metric-value">0.264</span></div>
+        </div>
+        <p class="muted small">This is the existing CTU-SME local five-feature class-weighted Logistic Regression model, seed 42, using <code>log1p</code> inputs. Values summarize this sampled holdout; they are not causal rankings.</p>
+        <h3 class="subheading">Selected held-out contributions</h3>
+        <div class="grid two">
+          <article class="card">
+            <div class="case-label"><span class="tag measured">Correct benign</span></div>
+            <p>Actual 0 · predicted 0 · attack probability 0.0015</p>
+            <div class="contrib"><span class="negative">bytes_src_to_dst: 88 → −3.596</span><span class="negative">bytes_dst_to_src: 144 → −2.178</span><span class="negative">packets_src_to_dst: 2 → −0.898</span></div>
+          </article>
+          <article class="card">
+            <div class="case-label"><span class="tag measured">Correct attack</span></div>
+            <p>Actual 1 · predicted 1 · attack probability 0.9838</p>
+            <div class="contrib"><span class="positive">bytes_src_to_dst: 0 → +2.027</span><span class="positive">bytes_dst_to_src: 0 → +1.213</span><span class="positive">packets_dst_to_src: 0 → +0.129</span></div>
+          </article>
+          <article class="card">
+            <div class="case-label"><span class="tag context">False positive</span></div>
+            <p>Actual 0 · predicted 1 · attack probability 0.9959</p>
+            <div class="contrib"><span class="positive">bytes_src_to_dst: 0 → +2.027</span><span class="positive">bytes_dst_to_src: 0 → +1.213</span><span class="positive">packets_src_to_dst: 8 → +0.838</span></div>
+          </article>
+          <article class="card">
+            <div class="case-label"><span class="tag context">False negative</span></div>
+            <p>Actual 1 · predicted 0 · attack probability 0.0495</p>
+            <div class="contrib"><span class="negative">bytes_src_to_dst: 423 → −5.552</span><span class="negative">bytes_dst_to_src: 888 → −3.414</span><span class="positive">packets_src_to_dst: 34 → +2.984</span></div>
+          </article>
+        </div>
+        <div class="callout"><strong>SHAP explains model behavior; it does not establish causation.</strong> The report covers this CTU-SME local model only, not the UNSW local or federated global model.</div>
+        <div class="link-row"><a class="link-button" href="shap_local_model_examples.md">Open full SHAP report</a></div>
+      </div>
+    </section>
+
+    <section id="privacy" class="panel" aria-labelledby="privacy-title">
+      <div class="section-head">
+        <p class="section-kicker">E · Privacy / Limitations</p>
+        <h2 id="privacy-title">Implemented experiments and their limits</h2>
+      </div>
+      <div class="section-body">
+        <div class="case-label"><span class="tag measured">Measured / implemented</span><span class="muted small">Behavior demonstrated by the controlled code path; not a general privacy guarantee.</span></div>
+        <div class="grid three">
+          <article class="card privacy-card implemented">
+            <h3>Local-data boundary</h3>
+            <p>In the networked localhost POC, client records stay in the client process; model arrays, training-example counts, and scalar evaluation summaries are communicated. This is a same-machine simulation.</p>
+          </article>
+          <article class="card privacy-card implemented">
+            <h3>Update clipping / noise</h3>
+            <p>Client-update L2 clipping and seeded Gaussian noise are implemented as an experimental mode. The noise experiment is DP-inspired.</p>
+          </article>
+          <article class="card privacy-card implemented">
+            <h3>Pairwise masking</h3>
+            <p>A deterministic two-client masking experiment is implemented; masks are constructed to cancel under example-count-weighted FedAvg.</p>
+          </article>
+        </div>
+        <div class="case-label spaced-label"><span class="tag poc">Research POC</span></div>
+        <div class="grid two">
+          <article class="card privacy-card poc-card"><h3>DP-inspired clipping + Gaussian noise</h3><p>This is an experimental mechanism only. No privacy accountant or formal epsilon-DP guarantee is implemented.</p></article>
+          <article class="card privacy-card poc-card"><h3>Secure-aggregation masking</h3><p>This is a masking proof of concept, not cryptographic secure aggregation. It provides no cryptographic security guarantee.</p></article>
+        </div>
+        <div class="case-label spaced-label"><span class="tag limit">Limitations</span></div>
+        <div class="grid three">
+          <article class="card privacy-card limited"><h3>No formal privacy guarantee</h3><p>No formal epsilon-DP guarantee and no cryptographic secure-aggregation guarantee.</p></article>
+          <article class="card privacy-card limited"><h3>Simulated clients</h3><p>Clients are dataset-derived simulations, not real organizations.</p></article>
+          <article class="card privacy-card limited"><h3>No live telemetry or alerts</h3><p>This is a static dashboard only; there is no live telemetry, operational TAXII service, or alerting.</p></article>
+        </div>
+        <div class="callout caution"><strong>Performance limitation:</strong> federated performance is not uniformly better across clients. Milestone 5's UNSW global model predicted all evaluation rows benign; the Milestone 7 shared-normalization ablation improved but did not close the gap to the UNSW local model.</div>
+      </div>
+    </section>
+
+    <footer>
+      Values are reproduced from the linked Milestone 4–8 reports and the committed threat-intelligence artifacts. This page contains no live data and uses no external resources. See <a href="../README.md">project README</a> and <a href="reproduction.md">reproduction guide</a>.
+    </footer>
+  </main>
+</body>
+</html>
