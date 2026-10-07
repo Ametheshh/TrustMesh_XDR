@@ -25,9 +25,17 @@ from src.federated.simulated_fedavg import (
 
 
 class SimulatedFedAvgTests(unittest.TestCase):
-    def test_approved_inputs_provide_only_one_numeric_feature_and_binary_target(self):
-        path = Path("data/canonical/smoke_test/ctu_unsw_fl_poc/ctu_sme_total_packets.jsonl")
-        x, y = load_client_data(path)
+    def test_loader_reads_all_rows_with_one_numeric_feature_and_binary_target(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "client.jsonl"
+            with path.open("w", encoding="utf-8") as stream:
+                for index in range(9760):
+                    record = {
+                        "features": {"total_packets": index},
+                        "labels": {"binary": index % 2},
+                    }
+                    stream.write(json.dumps(record) + "\n")
+            x, y = load_client_data(path)
         self.assertEqual(x.shape, (9760, 1))
         self.assertEqual(set(y.tolist()), {0, 1})
         self.assertTrue(np.isfinite(x).all())
