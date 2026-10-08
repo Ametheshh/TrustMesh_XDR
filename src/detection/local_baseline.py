@@ -132,6 +132,37 @@ def run_baseline(path: Path = DEFAULT_ARTIFACT, max_rows: int = MAX_ROWS) -> dic
     }
 
 
+class LocalDetectorBaseline:
+    """StandardScaler + LogisticRegression binary classifier wrapper."""
+
+    def __init__(self, random_state: int = RANDOM_STATE, max_iter: int = 1000):
+        try:
+            from sklearn.linear_model import LogisticRegression  # type: ignore[import-not-found]
+            from sklearn.pipeline import make_pipeline  # type: ignore[import-not-found]
+            from sklearn.preprocessing import StandardScaler  # type: ignore[import-not-found]
+        except ImportError as exc:
+            raise RuntimeError("scikit-learn is required; install the declared project dependency") from exc
+
+        self.model = make_pipeline(
+            StandardScaler(),
+            LogisticRegression(class_weight="balanced", random_state=random_state, max_iter=max_iter),
+        )
+
+    def fit(self, X: list[list[float]], y: list[int]) -> None:
+        """Fit the scaler and logistic regression on training data."""
+        self.model.fit(X, y)
+
+    def predict(self, X: list[list[float]]) -> list[int]:
+        """Predict binary class labels (0 for benign, 1 for attack)."""
+        preds = self.model.predict(X)
+        return [int(p) for p in preds]
+
+    def predict_proba(self, X: list[list[float]]) -> list[float]:
+        """Predict positive class (malicious) probabilities."""
+        probs = self.model.predict_proba(X)
+        return [float(p[1]) for p in probs]
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, default=DEFAULT_ARTIFACT)
