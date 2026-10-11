@@ -31,8 +31,9 @@ class OrganizationProfile:
         return float(np.mean(self.y))
 
 
-def _load_canonical_jsonl(path: Path, max_rows: int = 5000) -> Tuple[np.ndarray, np.ndarray, List[str]]:
+def _load_canonical_jsonl(path: str | Path, max_rows: int = 5000) -> Tuple[np.ndarray, np.ndarray, List[str]]:
     """Load feature matrix X and label vector y from a canonical JSONL file."""
+    path = Path(path)
     if not path.exists():
         raise FileNotFoundError(f"Canonical smoke file not found: {path}")
 
@@ -54,13 +55,13 @@ def _load_canonical_jsonl(path: Path, max_rows: int = 5000) -> Tuple[np.ndarray,
             if not feature_names:
                 feature_names = [
                     name for name, val in features.items()
-                    if isinstance(val, (int, float)) and not isinstance(val, bool)
+                    if isinstance(val, (int, float)) and not isinstance(val, bool) and np.isfinite(val)
                 ]
 
             vector = []
             for name in feature_names:
                 val = features.get(name)
-                if isinstance(val, (int, float)) and not isinstance(val, bool):
+                if isinstance(val, (int, float)) and not isinstance(val, bool) and np.isfinite(val):
                     vector.append(float(val))
 
             if len(vector) == len(feature_names) and binary in (0, 1):
@@ -70,7 +71,7 @@ def _load_canonical_jsonl(path: Path, max_rows: int = 5000) -> Tuple[np.ndarray,
     return np.array(vectors, dtype=np.float32), np.array(labels, dtype=np.int32), feature_names
 
 
-def load_organization_profiles(base_dir: Path, max_rows_per_client: int = 3000) -> Dict[str, OrganizationProfile]:
+def load_organization_profiles(base_dir: str | Path, max_rows_per_client: int = 3000) -> Dict[str, OrganizationProfile]:
     """Load 3 heterogeneous organization profiles (Bank, Hospital, Enterprise).
 
     Args:
@@ -80,6 +81,7 @@ def load_organization_profiles(base_dir: Path, max_rows_per_client: int = 3000) 
     Returns:
         Dict mapping profile names ('Bank', 'Hospital', 'Enterprise') to OrganizationProfile instances.
     """
+    base_dir = Path(base_dir)
     smoke_dir = base_dir / "data" / "canonical" / "smoke_test"
 
     # 1. Bank Profile (UNSW-NB15 partition)

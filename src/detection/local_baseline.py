@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -14,8 +15,9 @@ RANDOM_STATE = 42
 TEST_SIZE = 0.2
 
 
-def load_feature_rows(path: Path, max_rows: int = MAX_ROWS) -> tuple[list[list[float]], list[int], list[str]]:
+def load_feature_rows(path: str | Path, max_rows: int = MAX_ROWS) -> tuple[list[list[float]], list[int], list[str]]:
     """Read at most max_rows, taking model inputs only from features."""
+    path = Path(path)
     if max_rows <= 0:
         raise ValueError("max_rows must be positive")
 
@@ -46,7 +48,10 @@ def load_feature_rows(path: Path, max_rows: int = MAX_ROWS) -> tuple[list[list[f
                 value = features[name]
                 if isinstance(value, bool) or not isinstance(value, (int, float)):
                     raise ValueError(f"feature {name!r} is not numeric at {path}:{line_number}")
-                vector.append(float(value))
+                numeric_value = float(value)
+                if not math.isfinite(numeric_value):
+                    raise ValueError(f"feature {name!r} is not finite at {path}:{line_number}")
+                vector.append(numeric_value)
             vectors.append(vector)
             labels.append(int(binary))
 
@@ -79,7 +84,8 @@ def _scores(y_true: list[int], y_pred: list[int]) -> dict[str, Any]:
     }
 
 
-def run_baseline(path: Path = DEFAULT_ARTIFACT, max_rows: int = MAX_ROWS) -> dict[str, Any]:
+def run_baseline(path: str | Path = DEFAULT_ARTIFACT, max_rows: int = MAX_ROWS) -> dict[str, Any]:
+    path = Path(path)
     try:
         from sklearn.linear_model import LogisticRegression  # type: ignore[import-not-found]
         from sklearn.model_selection import train_test_split  # type: ignore[import-not-found]
