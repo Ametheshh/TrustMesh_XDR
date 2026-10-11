@@ -67,275 +67,365 @@ from fastapi.responses import HTMLResponse
 @app.get("/", response_class=HTMLResponse)
 @app.get("/dashboard", response_class=HTMLResponse)
 def root_dashboard() -> str:
-    """Render interactive SOC Triage Dashboard UI."""
+    """Render the research dashboard and controlled demo triage console."""
     return """<!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TrustMesh XDR | SOC Triage Platform</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: { 500: '#00f0ff', 600: '#00c3d0', 900: '#061325' },
-                        dark: { 800: '#0d192b', 900: '#070f1e', 950: '#030712' }
-                    }
-                }
-            }
-        }
-    </script>
+    <meta name="theme-color" content="#11120f">
+    <title>TrustMesh XDR | Experimental Operations Console</title>
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; background-color: #030712; color: #f3f4f6; }
-        .glass { background: rgba(13, 25, 43, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        :root {
+            color-scheme: dark;
+            --bg: #11120f; --panel: #191a16; --panel-raised: #20211c; --line: #44443b;
+            --green: #b6f36a; --amber: #f2b65d; --red: #f16e62; --ink: #f0efe6;
+            --muted: #aaa99c; --dim: #75756b; --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+            --display: "Arial Narrow", "Roboto Condensed", Impact, sans-serif;
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-width: 320px; background-color: var(--bg); color: var(--ink); font-family: system-ui, sans-serif; }
+        body::before { position: fixed; inset: 0; z-index: -1; content: ""; pointer-events: none; opacity: .13;
+            background: repeating-linear-gradient(0deg, transparent 0 3px, #000 4px), linear-gradient(#b6f36a0a 1px, transparent 1px), linear-gradient(90deg, #b6f36a0a 1px, transparent 1px); background-size: auto, 32px 32px, 32px 32px; }
+        button, textarea { font: inherit; }
+        button { color: inherit; }
+        a { color: var(--green); }
+        .shell { width: min(1440px, 100% - 40px); margin: 0 auto; }
+        .topbar { border-bottom: 1px solid var(--line); background: #11120fee; }
+        .topbar-inner { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+        .identity { display: flex; align-items: center; gap: 14px; }
+        .mark { width: 46px; height: 46px; display: grid; place-items: center; border: 2px solid var(--green); color: var(--green); font: 800 13px var(--mono); transform: rotate(-3deg); box-shadow: 4px 4px 0 #b6f36a33; }
+        .eyebrow, .micro { color: var(--muted); font: 700 10px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+        h1, h2, h3, p { margin-top: 0; }
+        h1 { margin-bottom: 3px; font: 800 clamp(22px, 3vw, 30px)/1 var(--display); letter-spacing: .035em; text-transform: uppercase; }
+        .identity p { margin: 0; color: var(--muted); font: 11px var(--mono); }
+        .top-actions { display: flex; align-items: center; gap: 16px; }
+        .status-chip { display: flex; align-items: center; gap: 8px; color: var(--muted); font: 10px var(--mono); text-transform: uppercase; }
+        .status-light { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px #b6f36a66; }
+        .button { min-height: 38px; padding: 8px 13px; border: 1px solid var(--green); background: var(--green); color: #171910; font: 800 11px var(--mono); letter-spacing: .02em; text-transform: uppercase; cursor: pointer; box-shadow: 3px 3px 0 #000; transition: transform .15s, box-shadow .15s, background .15s; }
+        .button:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 #000; }
+        .button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
+        .button:disabled { cursor: wait; opacity: .65; }
+        .button.secondary { border-color: var(--line); background: var(--panel-raised); color: var(--ink); }
+        .button.ghost { border-color: var(--line); background: transparent; color: var(--muted); }
+        .console { padding: 30px 0 48px; }
+        .masthead { display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 260px); align-items: end; gap: 24px; margin: 4px 0 24px; }
+        .masthead h2 { max-width: 760px; margin: 7px 0 0; font: 800 clamp(32px, 6vw, 64px)/.92 var(--display); letter-spacing: -.025em; text-transform: uppercase; }
+        .masthead h2 span { color: var(--green); }
+        .mast-meta { padding: 12px 14px; border-left: 2px solid var(--amber); color: var(--muted); font: 11px/1.8 var(--mono); }
+        .mast-meta strong { color: var(--amber); font-weight: 700; }
+        .layout { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; align-items: start; }
+        .panel { min-width: 0; border: 1px solid var(--line); background: var(--panel); box-shadow: 5px 5px 0 #0008; }
+        .panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 17px 18px; border-bottom: 1px solid var(--line); }
+        .panel-head h2, .panel-head h3 { margin: 4px 0 0; font: 800 20px/1 var(--display); letter-spacing: .04em; text-transform: uppercase; }
+        .panel-index { color: var(--green); font: 11px var(--mono); }
+        .benchmark { grid-column: span 7; }
+        .benchmark-inner { padding: 19px; }
+        .metric-primary { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 16px; padding: 17px; border: 1px solid var(--green); background: #b6f36a0a; }
+        .metric-primary .value { color: var(--green); font: 800 clamp(44px, 7vw, 76px)/.9 var(--mono); letter-spacing: -.08em; }
+        .metric-primary .metric-label { margin-bottom: 9px; color: var(--ink); font: 700 11px var(--mono); text-transform: uppercase; }
+        .metric-note { max-width: 230px; color: var(--muted); font: 10px/1.5 var(--mono); text-align: right; }
+        .metric-deltas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 11px; }
+        .delta { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px; border-left: 2px solid var(--line); background: var(--panel-raised); }
+        .delta-label { color: var(--muted); font: 10px var(--mono); text-transform: uppercase; }
+        .delta-value { color: var(--ink); font: 700 13px var(--mono); }
+        .source-note { margin: 14px 0 0; color: var(--dim); font: 10px/1.5 var(--mono); }
+        .research-note { grid-column: span 5; padding: 19px; border-color: #8e6633; }
+        .research-note h2 { margin: 6px 0 12px; font: 800 23px/1 var(--display); text-transform: uppercase; }
+        .research-note p { margin: 0; color: var(--muted); font: 12px/1.7 var(--mono); }
+        .privacy-line { margin-top: 14px !important; padding-top: 12px; border-top: 1px solid var(--line); color: var(--amber) !important; }
+        .queue { grid-column: span 8; }
+        .queue-tools { display: flex; align-items: center; gap: 14px; }
+        .queue-body { padding: 0 18px 14px; }
+        .disclaimer { display: flex; align-items: center; gap: 9px; margin: 16px 0 11px; padding: 10px 12px; border: 1px solid #8a332d; background: #f16e620c; color: #ff9186; font: 700 10px var(--mono); letter-spacing: .04em; }
+        .disclaimer::before { content: "!"; display: grid; flex: 0 0 17px; height: 17px; place-items: center; border: 1px solid currentColor; }
+        .queue-status { min-height: 20px; margin: 0 0 8px; color: var(--muted); font: 10px var(--mono); }
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { padding: 10px 9px; border-bottom: 1px solid var(--line); color: var(--dim); font: 700 9px var(--mono); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+        td { padding: 12px 9px; border-bottom: 1px solid #383830; color: var(--muted); font: 11px var(--mono); vertical-align: middle; }
+        tbody tr:hover { background: #ffffff06; }
+        .rank { color: var(--dim); }
+        .episode-id { color: var(--green); font-weight: 700; }
+        .risk { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+        .risk::before { width: 7px; height: 7px; content: ""; background: var(--green); }
+        .risk.medium::before { background: var(--amber); }
+        .risk.high::before { background: var(--red); }
+        .inspect { padding: 6px 8px; border: 1px solid var(--line); background: transparent; color: var(--green); font: 700 10px var(--mono); text-transform: uppercase; cursor: pointer; }
+        .inspect:hover { border-color: var(--green); background: #b6f36a0c; }
+        .empty-row { padding: 28px 10px; color: var(--muted); text-align: center; }
+        .cti { grid-column: span 4; }
+        .cti-body { padding: 17px; }
+        .cti-body p { color: var(--muted); font: 11px/1.6 var(--mono); }
+        textarea { width: 100%; min-height: 150px; resize: vertical; padding: 11px; border: 1px solid var(--line); outline: none; background: #10110e; color: var(--green); font: 11px/1.5 var(--mono); }
+        textarea:focus { border-color: var(--green); }
+        .cti-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 10px; }
+        .cti-result { min-height: 20px; margin-top: 12px; color: var(--muted); font: 11px/1.6 var(--mono); overflow-wrap: anywhere; }
+        dialog { width: min(760px, calc(100% - 28px)); max-height: min(84vh, 780px); padding: 0; border: 1px solid var(--green); background: var(--panel); color: var(--ink); box-shadow: 10px 10px 0 #000b; }
+        dialog::backdrop { background: #050604dd; }
+        .inspect-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 17px 19px; border-bottom: 1px solid var(--line); }
+        .inspect-head h2 { margin: 5px 0 0; color: var(--green); font: 800 25px var(--mono); }
+        .inspect-body { max-height: calc(84vh - 80px); overflow-y: auto; padding: 17px 19px; }
+        .detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0 0 18px; }
+        .detail-cell { min-width: 0; padding: 10px; border: 1px solid var(--line); background: #10110e; }
+        .detail-cell dt { color: var(--dim); font: 9px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+        .detail-cell dd { margin: 6px 0 0; color: var(--ink); font: 12px var(--mono); overflow-wrap: anywhere; }
+        .section-label { margin: 0 0 8px; color: var(--amber); font: 700 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+        .alert-list { display: grid; gap: 7px; }
+        .alert-row { display: grid; grid-template-columns: minmax(95px, .7fr) minmax(0, 2fr) auto; gap: 10px; align-items: start; padding: 10px; border-left: 2px solid var(--line); background: #10110e; font: 10px/1.5 var(--mono); }
+        .alert-row strong { color: var(--green); overflow-wrap: anywhere; }
+        .alert-row span { color: var(--muted); overflow-wrap: anywhere; }
+        .footer { padding: 18px 0 0; color: var(--dim); font: 10px var(--mono); }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+        :focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+        @media (max-width: 900px) { .benchmark, .research-note { grid-column: span 12; } .queue { grid-column: span 12; } .cti { grid-column: span 12; } .cti-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; } .cti-body > p { grid-column: 1 / -1; margin: 0; } }
+        @media (max-width: 600px) { .shell { width: min(100% - 24px, 1440px); } .topbar-inner { min-height: 66px; } .top-actions .status-chip { display: none; } .console { padding-top: 23px; } .masthead { grid-template-columns: 1fr; gap: 14px; } .mast-meta { max-width: 300px; } .panel-head { padding: 14px; } .queue-tools { gap: 6px; } .button { min-height: 35px; padding: 7px 9px; font-size: 9px; } .queue-body { padding: 0 12px 12px; } table { min-width: 570px; } .metric-primary { grid-template-columns: 1fr; } .metric-note { text-align: left; max-width: none; } .metric-deltas { grid-template-columns: 1fr; } .cti-body { display: block; } .cti-body > p { margin: 0 0 12px; } .alert-row { grid-template-columns: 1fr auto; } .alert-row span:nth-child(2) { grid-column: 1 / -1; grid-row: 2; } }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } }
     </style>
 </head>
-<body class="min-h-screen bg-dark-950 text-gray-100 flex flex-col">
-    <!-- Header -->
-    <header class="border-b border-gray-800 bg-dark-900/80 sticky top-0 z-50 backdrop-blur-md">
-        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="h-9 w-9 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-bold text-white shadow-lg shadow-cyan-500/20">
-                    XDR
-                </div>
-                <div>
-                    <h1 class="text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">TrustMesh XDR</h1>
-                    <p class="text-xs text-gray-400">Privacy-Bounded Federated Incident Correlation Platform</p>
-                </div>
-            </div>
-            <div class="flex items-center space-x-4">
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    <span class="w-2 h-2 mr-2 rounded-full bg-emerald-400 animate-pulse"></span> Service Active (127.0.0.1:8000)
-                </span>
-                <a href="/docs" target="_blank" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-800 hover:bg-gray-700 text-gray-200 transition">
-                    Swagger API Docs
-                </a>
-            </div>
+<body>
+<header class="topbar">
+    <div class="shell topbar-inner">
+        <div class="identity">
+            <div class="mark" aria-hidden="true">TXR</div>
+            <div><h1>TrustMesh XDR</h1><p>Experimental cyber-defense console / research build</p></div>
+        </div>
+        <div class="top-actions">
+            <span class="status-chip"><span class="status-light" aria-hidden="true"></span>API-backed view</span>
+            <a class="button secondary" href="/docs">API index ↗</a>
         </div>
     </header>
-
-    <!-- Main Content Container -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-6 py-8 space-y-8">
-
-        <!-- Research KPI Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="glass p-6 rounded-xl border border-gray-800 shadow-lg">
-                <p class="text-xs font-semibold uppercase tracking-wider text-cyan-400">CTU-SME Federated Recall@50</p>
-                <h3 id="kpi-recall" class="text-3xl font-extrabold text-white mt-2">Loading…</h3>
-                <p class="text-xs text-gray-400 mt-1">Held-out triage benchmark</p>
-            </div>
-            <div class="glass p-6 rounded-xl border border-gray-800 shadow-lg">
-                <p class="text-xs font-semibold uppercase tracking-wider text-emerald-400">Federated Effect</p>
-                <h3 id="kpi-dedup" class="text-3xl font-extrabold text-white mt-2">Loading…</h3>
-                <p class="text-xs text-gray-400 mt-1">CTU-SME vs Local at K=50</p>
-            </div>
-        </div>
-
-        <p class="text-xs text-gray-500">
-            Research limitation: clipping and Gaussian perturbation are experimental;
-            no formal differential-privacy guarantee has been established.
-        </p>
-
-        <!-- CTI Validator & Metrics Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-
-            <!-- STIX CTI Validator -->
-            <div class="glass p-6 rounded-xl border border-gray-800 shadow-xl space-y-4">
-                <h3 class="text-base font-bold text-white flex items-center">
-                    <svg class="w-5 h-5 mr-2 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011 1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                    Federated Evaluation Snapshot
-                </h3>
-
-                <p class="text-xs text-gray-400">
-                    Three-seed held-out triage benchmark. No unsupported PFL performance claims.
-                </p>
-
-                <div class="space-y-3">
-                    <div class="p-3.5 rounded-lg bg-dark-900/80 border border-gray-800/80 flex justify-between items-center">
-                        <div>
-                            <p class="text-xs font-bold text-cyan-400">CTU-SME</p>
-                            <p class="text-[11px] text-gray-400">Federated vs Local Incident Recall@50</p>
-                        </div>
-                        <span id="ctu-delta" class="px-2.5 py-1 rounded bg-cyan-500/10 text-cyan-400 text-xs font-bold border border-cyan-500/20">Loading…</span>
-                    </div>
-
-                    <div class="p-3.5 rounded-lg bg-dark-900/80 border border-gray-800/80 flex justify-between items-center">
-                        <div>
-                            <p class="text-xs font-bold text-emerald-400">UNSW-NB15</p>
-                            <p class="text-[11px] text-gray-400">Federated vs Local Incident Recall@50</p>
-                        </div>
-                        <span id="unsw-delta" class="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 text-xs font-bold border border-emerald-500/20">Loading…</span>
-                    </div>
-
-                    <div class="p-3.5 rounded-lg bg-dark-900/80 border border-gray-800/80 flex justify-between items-center">
-                        <div>
-                            <p class="text-xs font-bold text-purple-400">UNSW M5 → M7</p>
-                            <p class="text-[11px] text-gray-400">Shared normalization recovery from all-benign collapse</p>
-                        </div>
-                        <span class="px-2.5 py-1 rounded bg-purple-500/10 text-purple-400 text-xs font-bold border border-purple-500/20">Separate ablation</span>
-                    </div>
+<main class="shell console">
+    <section class="masthead" aria-labelledby="page-title">
+        <div><div class="eyebrow">Research console / 02—XDR</div><h2 id="page-title">Signals in the <span>dark.</span><br>Evidence in view.</h2></div>
+        <div class="mast-meta"><div>MODE / <strong>OFFLINE RESEARCH</strong></div><div>FEED / <strong>CONTROLLED DEMO</strong></div><div>DATA / REQUEST-DRIVEN</div></div>
+    </section>
+    <div class="layout">
+        <section class="panel benchmark" aria-labelledby="benchmark-title">
+            <div class="panel-head"><div><div class="micro">01 / measured output</div><h2 id="benchmark-title">Federated evaluation</h2></div><span class="panel-index">BENCHMARK</span></div>
+            <div class="benchmark-inner">
+                <div class="metric-primary">
+                    <div><div class="metric-label">CTU-SME Federated Recall@50</div><div class="value" id="kpi-recall" aria-live="polite">Loading…</div></div>
+                    <div class="metric-note">HELD-OUT TRIAGE BENCHMARK<br>NOT LIVE TELEMETRY</div>
                 </div>
-
-        </div>
-
-    </main>
-
-    <!-- Episode Detail Modal -->
-    <div id="episode-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
-        <div class="glass max-w-2xl w-full rounded-2xl border border-gray-800 p-6 space-y-6 max-h-[85vh] overflow-y-auto">
-            <div class="flex justify-between items-center border-b border-gray-800 pb-4">
-                <h3 id="modal-title" class="text-lg font-bold text-white">Episode Detail</h3>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-white font-bold text-xl">&times;</button>
+                <div class="metric-deltas">
+                    <div class="delta"><span class="delta-label">Federated Effect / CTU-SME vs Local @50</span><span id="kpi-dedup" class="delta-value" aria-live="polite">Loading…</span></div>
+                    <div class="delta"><span class="delta-label">CTU-SME / Recall Δ @50</span><span id="ctu-delta" class="delta-value">Loading…</span></div>
+                    <div class="delta"><span class="delta-label">UNSW-NB15 / Recall Δ @50</span><span id="unsw-delta" class="delta-value">Loading…</span></div>
+                </div>
+                <p id="metrics-status" class="source-note" role="status">Values load from GET /api/metrics/summary.</p>
             </div>
-            <div id="modal-body" class="space-y-4 text-xs text-gray-300">
-                Loading details...
+        </section>
+        <aside class="panel research-note" aria-labelledby="scope-title">
+            <div class="micro">02 / scope markers</div><h2 id="scope-title">Keep the signal honest.</h2>
+            <p>Benchmark metrics are fixed results from the documented held-out experiment. The queue below is generated from a local dataset artifact each time the API is requested; it is not saved operational data.</p>
+            <p class="privacy-line">PRIVACY / Experimental clipping + Gaussian perturbation. No formal differential-privacy guarantee.</p>
+        </aside>
+        <section class="panel queue" aria-labelledby="queue-title">
+            <div class="panel-head">
+                <div><div class="micro">03 / generated records</div><h2 id="queue-title">Controlled demonstration triage queue</h2></div>
+                <div class="queue-tools"><span id="queue-count" class="micro" aria-live="polite"></span><button id="refresh-queue" class="button" type="button">↻ Refresh</button></div>
             </div>
-        </div>
+            <div class="queue-body">
+                <div class="disclaimer">SIMULATED CONTROLLED DEMO — NOT LIVE TELEMETRY</div>
+                <p id="queue-status" class="queue-status" role="status">Loading queue from GET /api/triage/queue…</p>
+                <div class="table-wrap">
+                    <table>
+                        <caption class="sr-only">Ranked episodes generated by the controlled CICIoT23 demonstration</caption>
+                        <thead><tr><th scope="col">Rank</th><th scope="col">Episode ID</th><th scope="col">Demo entity</th><th scope="col">Calculated demo episode risk</th><th scope="col">Alerts</th><th scope="col">Signals</th><th scope="col" aria-label="Inspection"></th></tr></thead>
+                        <tbody id="triage-body"><tr><td colspan="7" class="empty-row">Requesting demo queue…</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+        <section class="panel cti" aria-labelledby="cti-title">
+            <div class="panel-head"><div><div class="micro">04 / local utility</div><h2 id="cti-title">STIX validation</h2></div><span class="panel-index">CTI</span></div>
+            <div class="cti-body">
+                <p>Validate a supplied STIX 2.1 bundle and compare its tactics with the controlled demo queue. No external feed is contacted.</p>
+                <label class="sr-only" for="stix-input">STIX 2.1 bundle JSON</label>
+                <textarea id="stix-input" spellcheck="false" placeholder='{"type":"bundle","id":"bundle--…","objects":[]}'></textarea>
+                <div><div class="cti-actions"><button id="validate-cti" class="button secondary" type="button">Validate bundle</button><span class="micro">LOCAL API</span></div><div id="cti-result" class="cti-result" role="status" aria-live="polite"></div></div>
+            </div>
+        </section>
     </div>
+    <footer class="footer">TrustMesh XDR / research proof of concept / no live telemetry</footer>
+</main>
+<dialog id="episode-modal" aria-labelledby="modal-title">
+    <div class="inspect-head"><div><div class="micro">Episode detail / generated demo record</div><h2 id="modal-title">Inspection</h2></div><button id="close-modal" class="button secondary" type="button" aria-label="Close episode inspection" autofocus>Close ×</button></div>
+    <div id="modal-body" class="inspect-body"></div>
+</dialog>
+<script>
+    const setText = (id, value) => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = value;
+    };
 
-    <!-- Scripts -->
-    <script>
         async function fetchMetricsSummary() {
-            const setText = (id, value) => {
-                const element = document.getElementById(id);
-                if (element) element.innerText = value;
-            };
-
             try {
                 const res = await fetch('/api/metrics/summary');
                 if (!res.ok) throw new Error(`Metrics API returned ${res.status}`);
-
                 const data = await res.json();
                 const ctu = data.triage_evaluation?.ctu_sme;
                 const unsw = data.triage_evaluation?.unsw_nb15;
-
                 if (!data.primary_endpoint || !ctu || !unsw) {
                     throw new Error("Metrics response is incomplete");
                 }
-
-                const percentagePoints = (federated, local) =>
-                    (federated - local) * 100;
-
-                const ctuDelta = percentagePoints(
-                    ctu.federated_recall_at_50,
-                    ctu.local_recall_at_50
-                );
-
-                const unswDelta = percentagePoints(
-                    unsw.federated_recall_at_50,
-                    unsw.local_recall_at_50
-                );
-
-                setText(
-                    'kpi-recall',
-                    `${(data.primary_endpoint.value * 100).toFixed(2)}%`
-                );
-                setText('kpi-dedup', `${ctuDelta >= 0 ? '+' : '−'}${Math.abs(ctuDelta).toFixed(2)} pp`);
-                setText('ctu-delta', `${ctuDelta >= 0 ? '+' : '−'}${Math.abs(ctuDelta).toFixed(2)} pp`);
-                setText('unsw-delta', `${unswDelta >= 0 ? '+' : '−'}${Math.abs(unswDelta).toFixed(2)} pp`);
+                const formatDelta = (federated, local) => {
+                    const delta = (federated - local) * 100;
+                    return `${delta >= 0 ? '+' : '−'}${Math.abs(delta).toFixed(2)} pp`;
+                };
+                setText('kpi-recall', `${(data.primary_endpoint.value * 100).toFixed(2)}%`);
+                setText('kpi-dedup', formatDelta(ctu.federated_recall_at_50, ctu.local_recall_at_50));
+                setText('ctu-delta', formatDelta(ctu.federated_recall_at_50, ctu.local_recall_at_50));
+                setText('unsw-delta', formatDelta(unsw.federated_recall_at_50, unsw.local_recall_at_50));
+                setText('metrics-status', `Source: GET /api/metrics/summary · ${data.primary_endpoint.dataset} / ${data.primary_endpoint.condition} · ${data.primary_endpoint.seeds.join(', ')} · fixed held-out benchmark`);
             } catch (err) {
                 console.error("Error loading metrics:", err);
                 for (const id of ['kpi-recall', 'kpi-dedup', 'ctu-delta', 'unsw-delta']) {
                     setText(id, 'Unavailable');
                 }
+                setText('metrics-status', 'Benchmark metrics unavailable from the API.');
             }
         }
 
         async function fetchTriageQueue() {
+            const tbody = document.getElementById('triage-body');
+            const status = document.getElementById('queue-status');
+            const button = document.getElementById('refresh-queue');
+            if (!tbody || !status) return;
+            button.disabled = true;
+            status.textContent = 'Refreshing controlled demo queue…';
+            tbody.replaceChildren();
             try {
                 const res = await fetch('/api/triage/queue');
+                if (!res.ok) throw new Error(`Triage API returned ${res.status}`);
                 const data = await res.json();
-                const tbody = document.getElementById('triage-body');
-                tbody.innerHTML = '';
-
-                if (!data.queue || data.queue.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-gray-500">No active triage episodes found.</td></tr>';
+                if (!Array.isArray(data.queue)) throw new Error('Triage response is missing its queue');
+                setText('queue-count', `${data.queue.length} / ${data.top_k_capacity} EPISODES`);
+                if (data.queue.length === 0) {
+                    showQueueMessage('No demo episodes available. Check that the local source artifact is present.');
+                    status.textContent = `No episodes · ${data.data_status || 'unknown source'}`;
                     return;
                 }
-
                 data.queue.forEach((item, index) => {
-                    const badgeClass = item.risk_score >= 0.7 ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                      (item.risk_score >= 0.4 ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20');
-
-                    const filteredTactics = item.tactics_covered.filter(t => t !== 'Benign' && t !== 'Unknown');
-                    const tacticsBadges = filteredTactics.length > 0
-                        ? filteredTactics.map(t => `<span class="inline-block bg-purple-500/10 text-purple-300 border border-purple-500/20 px-2 py-0.5 rounded text-[10px] mr-1.5 font-semibold">${t}</span>`).join('')
-                        : '<span class="text-gray-500 text-xs">Standard Telemetry</span>';
-
+                    const risk = Number(item.risk_score);
                     const tr = document.createElement('tr');
-                    tr.className = 'hover:bg-gray-800/30 transition';
-                    tr.innerHTML = `
-                        <td class="px-6 py-4 font-bold text-gray-400">#${index + 1}</td>
-                        <td class="px-6 py-4 font-mono text-cyan-400 font-semibold">${item.episode_id}</td>
-                        <td class="px-6 py-4 font-mono text-gray-200">${item.primary_entity}</td>
-                        <td class="px-6 py-4">
-                            <span class="px-2.5 py-1 rounded-full border text-xs font-bold ${badgeClass}">
-                                ${item.risk_score} Risk
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 text-gray-300">${item.alert_count} alerts</td>
-                        <td class="px-6 py-4">${tacticsBadges}</td>
-                        <td class="px-6 py-4 text-right">
-                            <button onclick="inspectEpisode('${item.episode_id}')" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-cyan-400 rounded-lg text-xs font-semibold transition">
-                                Inspect
-                            </button>
-                        </td>
-                    `;
+                    const cell = (className, text) => {
+                        const td = document.createElement('td');
+                        td.className = className;
+                        td.textContent = text;
+                        return td;
+                    };
+                    tr.append(cell('rank', String(index + 1).padStart(2, '0')));
+                    tr.append(cell('episode-id', item.episode_id));
+                    tr.append(cell('', item.primary_entity));
+                    const riskCell = document.createElement('td');
+                    const marker = document.createElement('span');
+                    marker.className = `risk${risk >= 0.7 ? ' high' : risk >= 0.4 ? ' medium' : ''}`;
+                    marker.textContent = `${Number.isFinite(risk) ? risk.toFixed(4) : '—'} / calculated demo risk`;
+                    riskCell.append(marker);
+                    tr.append(riskCell, cell('', `${item.alert_count} alerts`));
+                    const tactics = Array.isArray(item.tactics_covered)
+                        ? item.tactics_covered.filter(tactic => tactic !== 'Benign' && tactic !== 'Unknown').join(', ')
+                        : '';
+                    tr.append(cell('', tactics || 'No attack tactic reported'));
+                    const actionCell = document.createElement('td');
+                    const inspect = document.createElement('button');
+                    inspect.className = 'inspect';
+                    inspect.type = 'button';
+                    inspect.textContent = 'Inspect';
+                    inspect.setAttribute('aria-label', `Inspect episode ${item.episode_id}`);
+                    inspect.addEventListener('click', () => inspectEpisode(item.episode_id));
+                    actionCell.append(inspect);
+                    tr.append(actionCell);
                     tbody.appendChild(tr);
                 });
+                status.textContent = `Source: local CICIoT23 artifact · ${data.data_status || 'controlled demo'} · generated on request; not persisted`;
             } catch (err) {
                 console.error("Error fetching queue:", err);
+                setText('queue-count', '');
+                showQueueMessage('Queue unavailable. Check the API and local demo artifact, then refresh.');
+                status.textContent = 'Could not load the controlled demo queue.';
+            } finally {
+                button.disabled = false;
             }
+        }
+
+        function showQueueMessage(message) {
+            const row = document.createElement('tr');
+            const cell = document.createElement('td');
+            cell.className = 'empty-row';
+            cell.colSpan = 7;
+            cell.textContent = message;
+            row.append(cell);
+            document.getElementById('triage-body').replaceChildren(row);
         }
 
         async function inspectEpisode(episodeId) {
             const modal = document.getElementById('episode-modal');
             const body = document.getElementById('modal-body');
-            document.getElementById('modal-title').innerText = `Episode Inspection: ${episodeId}`;
-            modal.classList.remove('hidden');
+            setText('modal-title', episodeId);
+            body.textContent = 'Loading episode details…';
+            if (!modal.open) modal.showModal();
 
             try {
-                const res = await fetch(`/api/triage/episode/${episodeId}`);
+                const res = await fetch(`/api/triage/episode/${encodeURIComponent(episodeId)}`);
+                if (!res.ok) throw new Error(`Episode API returned ${res.status}`);
                 const ep = await res.json();
-                body.innerHTML = `
-                    <div class="grid grid-cols-2 gap-4 bg-dark-900 p-4 rounded-lg border border-gray-800">
-                        <div><span class="text-gray-500">Primary Entity:</span> <strong class="text-cyan-400">${ep.primary_entity}</strong></div>
-                        <div><span class="text-gray-500">Risk Score:</span> <strong class="text-amber-400">${ep.risk_score}</strong></div>
-                        <div><span class="text-gray-500">Duration:</span> ${ep.duration}s</div>
-                        <div><span class="text-gray-500">Evidence Diversity:</span> ${ep.evidence_diversity} items</div>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-white mb-2">Constituent Alerts (${ep.alerts.length})</h4>
-                        <div class="space-y-2 max-h-48 overflow-y-auto pr-2">
-                            ${ep.alerts.map(a => `
-                                <div class="p-2.5 rounded bg-dark-900 border border-gray-800/80 flex justify-between items-center">
-                                    <div>
-                                        <p class="font-mono text-cyan-400 text-[11px]">${a.alert_id} &bull; ${a.src_ip}:${a.src_port} &rarr; ${a.dst_ip}:${a.dst_port}</p>
-                                        <p class="text-[10px] text-gray-500">Tactic: ${a.tactic}</p>
-                                    </div>
-                                    <span class="font-bold text-emerald-400 text-[11px]">Conf: ${(a.detection_confidence * 100).toFixed(1)}%</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
+                body.replaceChildren();
+                const grid = document.createElement('dl');
+                grid.className = 'detail-grid';
+                const fields = [
+                    ['Primary entity', ep.primary_entity],
+                    ['Calculated demo episode risk', ep.risk_score],
+                    ['Generated start offset', ep.start_time == null ? null : `T+${Number(ep.start_time).toFixed(3)}s`],
+                    ['Generated end offset', ep.end_time == null ? null : `T+${Number(ep.end_time).toFixed(3)}s`],
+                    ['Generated duration', ep.duration == null ? null : `${ep.duration}s`],
+                    ['Evidence diversity', ep.evidence_diversity],
+                    ['Tactics covered', Array.isArray(ep.tactics_covered) ? ep.tactics_covered.join(', ') : null],
+                ];
+                fields.forEach(([label, value]) => {
+                    if (value == null) return;
+                    const item = document.createElement('div');
+                    item.className = 'detail-cell';
+                    const term = document.createElement('dt');
+                    term.textContent = label;
+                    const detail = document.createElement('dd');
+                    detail.textContent = String(value);
+                    item.append(term, detail);
+                    grid.append(item);
+                });
+                body.append(grid);
+                const sectionLabel = document.createElement('h3');
+                sectionLabel.className = 'section-label';
+                sectionLabel.textContent = `Constituent alerts · ${Array.isArray(ep.alerts) ? ep.alerts.length : 0}`;
+                body.append(sectionLabel);
+                const list = document.createElement('div');
+                list.className = 'alert-list';
+                (Array.isArray(ep.alerts) ? ep.alerts : []).forEach(alert => {
+                    const row = document.createElement('div');
+                    row.className = 'alert-row';
+                    const id = document.createElement('strong');
+                    id.textContent = alert.alert_id;
+                    const endpoints = document.createElement('span');
+                    endpoints.textContent = `${alert.src_ip}:${alert.src_port} → ${alert.dst_ip}:${alert.dst_port}`;
+                    const metadata = document.createElement('span');
+                    const offset = alert.timestamp == null ? 'time unavailable' : `T+${Number(alert.timestamp).toFixed(3)}s`;
+                    metadata.textContent = `${offset} · ${alert.tactic} · ${(Number(alert.detection_confidence) * 100).toFixed(1)}% confidence`;
+                    row.append(id, endpoints, metadata);
+                    list.append(row);
+                });
+                body.append(list);
             } catch (err) {
-                body.innerText = "Error loading episode details.";
+                console.error("Error fetching episode:", err);
+                body.textContent = 'Episode details unavailable. Close this inspection and refresh the queue.';
             }
-        }
-
-        function closeModal() {
-            document.getElementById('episode-modal').classList.add('hidden');
         }
 
         async function validateCTI() {
             const input = document.getElementById('stix-input').value;
             const resDiv = document.getElementById('cti-result');
-            resDiv.classList.remove('hidden');
-            resDiv.innerHTML = 'Validating intelligence bundle...';
+            resDiv.textContent = 'Validating bundle…';
 
             try {
                 const bundle = JSON.parse(input);
@@ -344,21 +434,25 @@ def root_dashboard() -> str:
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ bundle })
                 });
+                if (!res.ok) throw new Error(`CTI API returned ${res.status}`);
                 const data = await res.json();
-                resDiv.innerHTML = `
-                    <div class="flex justify-between font-bold text-emerald-400 mb-1">
-                        <span>Validation Status: ${data.is_valid ? 'VALID STIX 2.1' : 'INVALID'}</span>
-                        <span>Quality Score: ${data.quality_score}</span>
-                    </div>
-                    <p class="text-gray-400">Indicators: ${data.indicator_count} | Tactics Found: ${data.tactics_found ? data.tactics_found.join(', ') : 'None'}</p>
-                    <p class="text-cyan-400 font-semibold mt-1">Local Observability Relevance: ${(data.local_relevance_score * 100).toFixed(1)}%</p>
-                `;
+                resDiv.textContent = `Validation: ${data.is_valid ? 'VALID STIX 2.1' : 'INVALID'} · Quality ${data.quality_score} · Indicators ${data.indicator_count} · Tactics ${(data.tactics_found || []).join(', ') || 'None'} · Demo relevance ${((data.local_relevance_score || 0) * 100).toFixed(1)}%`;
             } catch (err) {
-                resDiv.innerHTML = `<span class="text-red-400">Invalid JSON format: ${err.message}</span>`;
+                console.error("Error validating STIX bundle:", err);
+                resDiv.textContent = err instanceof SyntaxError ? `Invalid JSON: ${err.message}` : 'Validation unavailable. Check the bundle and CTI API.';
             }
         }
 
-        // Auto-fetch on load
+        document.getElementById('refresh-queue').addEventListener('click', fetchTriageQueue);
+        document.getElementById('close-modal').addEventListener('click', () => document.getElementById('episode-modal').close());
+        const modal = document.getElementById('episode-modal');
+        modal.addEventListener('click', event => {
+            if (event.target === event.currentTarget) modal.close();
+        });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && modal.open) modal.close();
+        });
+        document.getElementById('validate-cti').addEventListener('click', validateCTI);
         fetchMetricsSummary();
         fetchTriageQueue();
     </script>

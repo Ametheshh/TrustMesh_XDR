@@ -2,6 +2,7 @@
 
 import pytest
 from fastapi.testclient import TestClient
+from src.api import main as api_main
 from src.api.main import app
 from src.correlation.models import AttackEpisode, CanonicalAlert
 from src.cti.validator import CTIValidator
@@ -73,6 +74,53 @@ def test_api_triage_queue_endpoint():
     data = response.json()
     assert "queue" in data
     assert data["top_k_capacity"] == 50
+
+
+def test_dashboard_restores_demo_queue_and_inspection_controls():
+    response = client.get("/dashboard")
+
+    assert response.status_code == 200
+    assert "SIMULATED CONTROLLED DEMO — NOT LIVE TELEMETRY" in response.text
+    assert 'id="triage-body"' in response.text
+    assert 'id="refresh-queue"' in response.text
+    assert 'id="episode-modal"' in response.text
+    assert "/api/triage/queue" in response.text
+    assert "/api/triage/episode/" in response.text
+    assert "cdn.tailwindcss.com" not in response.text
+    assert "prefers-reduced-motion" in response.text
+
+
+def test_api_episode_inspection_returns_demo_alert_details(monkeypatch):
+    episode = AttackEpisode("EP-0001")
+    episode.add_alert(
+        CanonicalAlert(
+            alert_id="ALT-0001",
+            timestamp=3.0,
+            src_ip="DEMO-SRC-1",
+            dst_ip="DEMO-DST-1",
+            src_port=1001,
+            dst_port=80,
+            protocol="tcp",
+            detection_confidence=0.85,
+            is_attack=True,
+            tactic="Execution",
+        )
+    )
+    monkeypatch.setattr(
+        api_main,
+        "_get_demo_triage_state",
+        lambda: ([episode], [(episode, 0.75)], 1),
+    )
+
+    queue = client.get("/api/triage/queue").json()
+    details = client.get("/api/triage/episode/EP-0001").json()
+
+    assert queue["data_status"] == "controlled_demo"
+    assert queue["queue"][0]["episode_id"] == "EP-0001"
+    assert queue["queue"][0]["risk_score"] == 0.75
+    assert details["alerts"][0]["alert_id"] == "ALT-0001"
+    assert details["alerts"][0]["timestamp"] == 3.0
+    assert details["alerts"][0]["tactic"] == "Execution"
 
 
 def test_api_cti_validate_endpoint():
