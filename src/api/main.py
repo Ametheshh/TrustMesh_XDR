@@ -120,69 +120,24 @@ def root_dashboard() -> str:
     <!-- Main Content Container -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-6 py-8 space-y-8">
 
-        <!-- KPI Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <!-- Research KPI Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="glass p-6 rounded-xl border border-gray-800 shadow-lg">
-                <p class="text-xs font-semibold uppercase tracking-wider text-cyan-400">Primary Endpoint</p>
-                <h3 id="kpi-recall" class="text-3xl font-extrabold text-white mt-2">69.32%</h3>
-                <p class="text-xs text-gray-400 mt-1">CTU-SME Federated Recall@50</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-cyan-400">CTU-SME Federated Recall@50</p>
+                <h3 id="kpi-recall" class="text-3xl font-extrabold text-white mt-2">Loading…</h3>
+                <p class="text-xs text-gray-400 mt-1">Held-out triage benchmark</p>
             </div>
             <div class="glass p-6 rounded-xl border border-gray-800 shadow-lg">
                 <p class="text-xs font-semibold uppercase tracking-wider text-emerald-400">Federated Effect</p>
-                <h3 id="kpi-dedup" class="text-3xl font-extrabold text-white mt-2">+0.94 pp</h3>
+                <h3 id="kpi-dedup" class="text-3xl font-extrabold text-white mt-2">Loading…</h3>
                 <p class="text-xs text-gray-400 mt-1">CTU-SME vs Local at K=50</p>
             </div>
-            <div class="glass p-6 rounded-xl border border-gray-800 shadow-lg">
-                <p class="text-xs font-semibold uppercase tracking-wider text-purple-400">Detection Metric</p>
-                <h3 class="text-3xl font-extrabold text-white mt-2">N/A</h3>
-                <p class="text-xs text-gray-400 mt-1">Not reported in Phase 2</p>
-            </div>
-            <div class="glass p-6 rounded-xl border border-gray-800 shadow-lg">
-                <p class="text-xs font-semibold uppercase tracking-wider text-amber-400">Privacy Status</p>
-                <h3 id="kpi-dp" class="text-3xl font-extrabold text-white mt-2">POC</h3>
-                <p class="text-xs text-gray-400 mt-1">Experimental clipping + Gaussian perturbation; no formal ε-DP guarantee</p>
-            </div>
         </div>
 
-        <!-- Triage Queue Table Section -->
-        <div class="glass rounded-xl border border-gray-800 shadow-xl overflow-hidden">
-            <div class="px-6 py-5 border-b border-gray-800 flex items-center justify-between bg-dark-900/50">
-                <div>
-                    <h2 class="text-lg font-bold text-white flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                        Controlled Demonstration Triage Queue
-                    </h2>
-                    <p class="text-xs text-gray-400 mt-0.5">UI demonstration only; not the source of the validated Phase 2 held-out metrics</p>
-                </div>
-                <button onclick="fetchTriageQueue()" class="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-dark-950 font-bold text-xs rounded-lg transition shadow-md shadow-cyan-500/10 flex items-center">
-                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    Refresh Queue
-                </button>
-            </div>
-
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-gray-900/60 text-xs uppercase text-gray-400 border-b border-gray-800">
-                        <tr>
-                            <th class="px-6 py-3.5 font-semibold">Rank</th>
-                            <th class="px-6 py-3.5 font-semibold">Episode ID</th>
-                            <th class="px-6 py-3.5 font-semibold">Demo Entity</th>
-                            <th class="px-6 py-3.5 font-semibold">Risk Score</th>
-                            <th class="px-6 py-3.5 font-semibold">Alert Count</th>
-                            <th class="px-6 py-3.5 font-semibold">Detection Stage</th>
-                            <th class="px-6 py-3.5 font-semibold text-right">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="triage-body" class="divide-y divide-gray-800/60 text-gray-300">
-                        <tr>
-                            <td colspan="7" class="px-6 py-12 text-center text-gray-500">
-                                Loading live triage queue from API...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <p class="text-xs text-gray-500">
+            Research limitation: clipping and Gaussian perturbation are experimental;
+            no formal differential-privacy guarantee has been established.
+        </p>
 
         <!-- CTI Validator & Metrics Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -204,7 +159,7 @@ def root_dashboard() -> str:
                             <p class="text-xs font-bold text-cyan-400">CTU-SME</p>
                             <p class="text-[11px] text-gray-400">Federated vs Local Incident Recall@50</p>
                         </div>
-                        <span class="px-2.5 py-1 rounded bg-cyan-500/10 text-cyan-400 text-xs font-bold border border-cyan-500/20">+0.94 pp</span>
+                        <span id="ctu-delta" class="px-2.5 py-1 rounded bg-cyan-500/10 text-cyan-400 text-xs font-bold border border-cyan-500/20">Loading…</span>
                     </div>
 
                     <div class="p-3.5 rounded-lg bg-dark-900/80 border border-gray-800/80 flex justify-between items-center">
@@ -212,7 +167,7 @@ def root_dashboard() -> str:
                             <p class="text-xs font-bold text-emerald-400">UNSW-NB15</p>
                             <p class="text-[11px] text-gray-400">Federated vs Local Incident Recall@50</p>
                         </div>
-                        <span class="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 text-xs font-bold border border-emerald-500/20">−0.68 pp</span>
+                        <span id="unsw-delta" class="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 text-xs font-bold border border-emerald-500/20">Loading…</span>
                     </div>
 
                     <div class="p-3.5 rounded-lg bg-dark-900/80 border border-gray-800/80 flex justify-between items-center">
@@ -220,7 +175,7 @@ def root_dashboard() -> str:
                             <p class="text-xs font-bold text-purple-400">UNSW M5 → M7</p>
                             <p class="text-[11px] text-gray-400">Shared normalization recovery from all-benign collapse</p>
                         </div>
-                        <span class="px-2.5 py-1 rounded bg-purple-500/10 text-purple-400 text-xs font-bold border border-purple-500/20">Recovery observed</span>
+                        <span class="px-2.5 py-1 rounded bg-purple-500/10 text-purple-400 text-xs font-bold border border-purple-500/20">Separate ablation</span>
                     </div>
                 </div>
 
@@ -244,15 +199,48 @@ def root_dashboard() -> str:
     <!-- Scripts -->
     <script>
         async function fetchMetricsSummary() {
+            const setText = (id, value) => {
+                const element = document.getElementById(id);
+                if (element) element.innerText = value;
+            };
+
             try {
                 const res = await fetch('/api/metrics/summary');
+                if (!res.ok) throw new Error(`Metrics API returned ${res.status}`);
+
                 const data = await res.json();
-                if (data.primary_endpoint) {
-                    document.getElementById('kpi-recall').innerText =
-                        `${data.primary_endpoint.percentage.toFixed(2)}%`;
+                const ctu = data.triage_evaluation?.ctu_sme;
+                const unsw = data.triage_evaluation?.unsw_nb15;
+
+                if (!data.primary_endpoint || !ctu || !unsw) {
+                    throw new Error("Metrics response is incomplete");
                 }
+
+                const percentagePoints = (federated, local) =>
+                    (federated - local) * 100;
+
+                const ctuDelta = percentagePoints(
+                    ctu.federated_recall_at_50,
+                    ctu.local_recall_at_50
+                );
+
+                const unswDelta = percentagePoints(
+                    unsw.federated_recall_at_50,
+                    unsw.local_recall_at_50
+                );
+
+                setText(
+                    'kpi-recall',
+                    `${(data.primary_endpoint.value * 100).toFixed(2)}%`
+                );
+                setText('kpi-dedup', `${ctuDelta >= 0 ? '+' : '−'}${Math.abs(ctuDelta).toFixed(2)} pp`);
+                setText('ctu-delta', `${ctuDelta >= 0 ? '+' : '−'}${Math.abs(ctuDelta).toFixed(2)} pp`);
+                setText('unsw-delta', `${unswDelta >= 0 ? '+' : '−'}${Math.abs(unswDelta).toFixed(2)} pp`);
             } catch (err) {
                 console.error("Error loading metrics:", err);
+                for (const id of ['kpi-recall', 'kpi-dedup', 'ctu-delta', 'unsw-delta']) {
+                    setText(id, 'Unavailable');
+                }
             }
         }
 
