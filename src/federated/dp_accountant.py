@@ -1,11 +1,15 @@
-"""Rényi Differential Privacy (RDP) accountant for formal (epsilon, delta) privacy bounds."""
+"""Illustrative Gaussian Rényi Differential Privacy (RDP) calculations."""
 
 import math
 from typing import Dict, List
 
 
 class RDPAccountant:
-    """Computes exact (epsilon, delta) differential privacy guarantees via Rényi DP composition."""
+    """Compute illustrative epsilon values from hypothetical Gaussian RDP parameters.
+
+    This simplified calculation is not connected to the experiment's actual
+    updates and does not establish a differential privacy guarantee.
+    """
 
     def __init__(
         self,
@@ -13,15 +17,15 @@ class RDPAccountant:
         target_delta: float = 1e-5,
         orders: List[float] = None,
     ):
-        """Initialize RDP Accountant.
+        """Initialize the illustrative calculator with hypothetical parameters.
 
         Args:
-            noise_multiplier: Noise multiplier sigma (std_dev / clipping_bound).
-            target_delta: Target failure probability delta (e.g. 1e-5).
-            orders: List of Rényi orders alpha to search over.
+            noise_multiplier: Assumed Gaussian sigma (std_dev / clipping_bound).
+            target_delta: Hypothetical delta value for the calculation.
+            orders: Finite list of Rényi orders alpha to search over.
         """
         if noise_multiplier <= 0:
-            raise ValueError("Noise multiplier sigma must be strictly positive for DP guarantees")
+            raise ValueError("Noise multiplier sigma must be strictly positive for this calculation")
         if not (0 < target_delta < 1):
             raise ValueError("Target delta must be in range (0, 1)")
 
@@ -30,11 +34,14 @@ class RDPAccountant:
         self.orders = orders or [1.5, 2.0, 3.0, 5.0, 8.0, 10.0, 16.0, 32.0, 64.0]
 
     def compute_rdp_per_round(self, alpha: float) -> float:
-        """Compute Rényi divergence at order alpha for Gaussian mechanism: alpha / (2 * sigma^2)."""
+        """Apply the illustrative Gaussian RDP formula alpha / (2 * sigma^2)."""
         return alpha / (2.0 * (self.noise_multiplier ** 2))
 
     def compute_epsilon(self, num_rounds: int) -> float:
-        """Compute minimum epsilon at target_delta after num_rounds of federated aggregation.
+        """Return a hypothetical epsilon from the simplified Gaussian RDP formula.
+
+        The minimum searches only the configured finite orders. This value is
+        not an accounting of actual experiment updates or a privacy guarantee.
 
         Formula: eps(delta) = min_{alpha > 1} [ num_rounds * (alpha / (2 * sigma^2)) + ln(1/delta) / (alpha - 1) ]
         """
@@ -51,7 +58,7 @@ class RDPAccountant:
         return best_eps
 
     def generate_privacy_report(self, rounds_list: List[int] = [1, 5, 10, 20]) -> Dict[str, float]:
-        """Generate a privacy budget report mapping rounds to (epsilon, delta) bounds."""
+        """Return illustrative epsilon values for hypothetical round counts and delta."""
         report = {
             "noise_multiplier": self.noise_multiplier,
             "target_delta": self.target_delta,

@@ -1,4 +1,4 @@
-"""Benchmark evaluation of poisoning attack resilience and formal DP (epsilon, delta) accounting."""
+"""Evaluate poisoning resilience and illustrative Gaussian RDP calculations."""
 
 import sys
 from pathlib import Path
@@ -36,9 +36,9 @@ def evaluate_predictions(y_true: np.ndarray, logits: np.ndarray) -> dict:
 
 
 def run_phase4_evaluation():
-    """Run comprehensive poisoning resilience and differential privacy benchmark."""
+    """Run poisoning tests and display hypothetical RDP calculations."""
     print("=" * 80)
-    print("      TrustMesh XDR - Phase 4 Poisoning Resilience & DP Accounting")
+    print("      TrustMesh XDR - Phase 4 Poisoning & Illustrative RDP")
     print("=" * 80)
 
     # 1. Load Organization Profiles
@@ -103,12 +103,14 @@ def run_phase4_evaluation():
         print(f" {setting_name:<25} | {attacked:<13} |   {prec:6.2f}% |  {rec:6.2f}% |  {f1:6.2f}% |  {bal:6.2f}%")
     print("=" * 80 + "\n")
 
-    # 2. Formal Differential Privacy Accounting
+    # 2. Illustrative calculation only; these parameters are not from this experiment.
     print("=" * 80)
-    print("             FORMAL RDP DIFFERENTIAL PRIVACY ACCOUNTING")
+    print("       ILLUSTRATIVE GAUSSIAN RDP CALCULATION (HYPOTHETICAL PARAMETERS)")
+    print(" Not a privacy guarantee for this Phase 4 experiment.")
+    print(" These values are not connected to the experiment's actual updates.")
     print("=" * 80)
-    print(" Target Delta (failure prob): delta = 1e-5\n")
-    print(f" {'Noise Multiplier (sigma)':<25} | {'Eps @ 5 Rounds':<16} | {'Eps @ 10 Rounds':<16} | {'Eps @ 20 Rounds':<16}")
+    print(" Hypothetical target delta: delta = 1e-5\n")
+    print(f" {'Hypothetical Noise (sigma)':<25} | {'Illustrative eps @ 5':<16} | {'Illustrative eps @ 10':<16} | {'Illustrative eps @ 20':<16}")
     print("-" * 80)
 
     for sigma in [0.5, 1.0, 1.5, 2.0]:
