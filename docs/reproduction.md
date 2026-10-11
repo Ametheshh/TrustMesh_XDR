@@ -104,3 +104,4 @@ Run the repository tests:
 ```
 
 The tests use temporary fixtures for adapters and pipeline behavior and a deterministic temporary JSONL fixture for the one-feature data-loader check. They do not require the ignored smoke artifacts used by the dataset-backed evaluation commands.
+
