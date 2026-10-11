@@ -88,10 +88,16 @@ def test_api_cti_validate_endpoint():
     assert data["is_valid"] is True
 
 
+
 def test_api_metrics_summary_endpoint():
     """Test /api/metrics/summary endpoint."""
     response = client.get("/api/metrics/summary")
     assert response.status_code == 200
     data = response.json()
+
     assert "triage_evaluation" in data
-    assert "privacy_rdp_accounting" in data
+    assert "privacy_status" in data
+
+    assert "no formal epsilon-DP guarantee" in data["privacy_status"]["dp"]
+    assert "not production secure aggregation" in data["privacy_status"]["secure_aggregation"]
+    assert "privacy_rdp_accounting" not in data
