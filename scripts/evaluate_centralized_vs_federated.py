@@ -42,12 +42,19 @@ def build_partitions_for_seed(client_rows: dict[str, tuple[np.ndarray, np.ndarra
 
 def fit_federated_global_model(
     partitions: dict[str, tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]],
+    *,
+    class_weighted: bool = True,
 ) -> tuple[dict[str, list[np.ndarray]], list[np.ndarray]]:
     """Train local client models and aggregate them with the project’s in-memory Flower FedAvg strategy."""
     local_params: dict[str, list[np.ndarray]] = {}
     fit_results: list[tuple[None, FitRes]] = []
     for name, (x_train, y_train, _, _) in partitions.items():
-        params = train_parameters(x_train, y_train, zero_parameters(len(FEATURES)))
+        params = train_parameters(
+            x_train,
+            y_train,
+            zero_parameters(len(FEATURES)),
+            class_weighted=class_weighted,
+        )
         local_params[name] = params
         fit_results.append((
             None,

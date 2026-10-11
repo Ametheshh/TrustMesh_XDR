@@ -361,13 +361,17 @@ def train_parameters(
     parameters: list[np.ndarray],
     *,
     epochs: int = LOCAL_EPOCHS,
+    class_weighted: bool = True,
 ) -> list[np.ndarray]:
     """Train one weighted binary logistic-regression model locally."""
     weights = np.asarray(parameters[0], dtype=np.float64).copy()
     bias = float(np.asarray(parameters[1], dtype=np.float64)[0])
-    counts = np.bincount(y, minlength=2).astype(np.float64)
-    class_weights = len(y) / (2.0 * counts)
-    sample_weights = class_weights[y]
+    if class_weighted:
+        counts = np.bincount(y, minlength=2).astype(np.float64)
+        class_weights = len(y) / (2.0 * counts)
+        sample_weights = class_weights[y]
+    else:
+        sample_weights = np.ones(len(y), dtype=np.float64)
     scale = float(sample_weights.sum())
     for _ in range(epochs):
         logits = np.clip((x @ weights).reshape(-1) + bias, -30.0, 30.0)
@@ -386,7 +390,13 @@ def predict(x: np.ndarray, parameters: list[np.ndarray]) -> np.ndarray:
     return (logits >= 0.0).astype(np.int64)
 
 
-def train_centralized_model(x_train: np.ndarray, y_train: np.ndarray, *, num_features: int | None = None) -> list[np.ndarray]:
+def train_centralized_model(
+    x_train: np.ndarray,
+    y_train: np.ndarray,
+    *,
+    num_features: int | None = None,
+    class_weighted: bool = True,
+) -> list[np.ndarray]:
     """Train one pooled logistic-regression model from concatenated client training partitions."""
     if x_train.ndim != 2:
         raise ValueError("x_train must be a 2D array of shape (n_samples, n_features)")
@@ -396,7 +406,12 @@ def train_centralized_model(x_train: np.ndarray, y_train: np.ndarray, *, num_fea
         num_features = x_train.shape[1]
     if num_features != x_train.shape[1]:
         raise ValueError(f"x_train has {x_train.shape[1]} features but num_features={num_features}")
-    return train_parameters(x_train, y_train, zero_parameters(num_features))
+    return train_parameters(
+        x_train,
+        y_train,
+        zero_parameters(num_features),
+        class_weighted=class_weighted,
+    )
 
 
 def classification_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, Any]:
