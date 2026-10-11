@@ -41,8 +41,9 @@ _RESULT_PREFIX = "TRUSTMESH_RESULT="
 DP_DEFAULTS = {"clip_norm": 1.0, "noise_multiplier": 1.0, "random_seed": 2026}
 
 
-def load_client_data(path: Path) -> tuple[np.ndarray, np.ndarray]:
+def load_client_data(path: str | Path) -> tuple[np.ndarray, np.ndarray]:
     """Load only the approved one-feature and binary-label channels."""
+    path = Path(path)
     values: list[float] = []
     labels: list[int] = []
     with path.open(encoding="utf-8") as stream:
@@ -87,6 +88,151 @@ def stratified_split(y: np.ndarray, *, seed: int = SPLIT_SEED) -> tuple[np.ndarr
 def initial_parameters() -> list[np.ndarray]:
     """Return the shared parameter ordering: [weight_total_packets, bias]."""
     return [np.zeros((1,), dtype=np.float64), np.zeros((1,), dtype=np.float64)]
+
+
+def zero_parameters(num_features: int) -> list[np.ndarray]:
+    """Return zero-initialized logistic parameters for a feature vector of length num_features."""
+    if isinstance(num_features, bool) or not isinstance(num_features, int) or num_features <= 0:
+        raise ValueError("num_features must be a positive integer")
+    return [np.zeros((num_features,), dtype=np.float64), np.zeros((1,), dtype=np.float64)]
+
+
+def prepare_feature_vector(feature_map: dict[str, Any], feature_names: list[str]) -> np.ndarray:
+    """Validate the feature schema and return the log1p-transformed numeric vector.
+
+    Dictionary insertion order is intentionally ignored; feature names are mapped by
+    the canonical schema and validated against the expected set of keys.
+    """
+    if not isinstance(feature_map, dict):
+        raise TypeError("feature_map must be a dictionary keyed by feature name")
+    if not feature_names:
+        raise ValueError("feature_names must not be empty")
+    provided = set(feature_map.keys())
+    expected = set(feature_names)
+    if provided != expected:
+        missing = sorted(set(feature_names) - provided)
+        extra = sorted(provided - set(feature_names))
+        raise ValueError(
+            "Feature keys do not match the model schema: "
+            f"expected {feature_names}, missing={missing}, extra={extra}"
+        )
+
+    values: list[float] = []
+    for name in feature_names:
+        value = feature_map.get(name)
+        if value is None:
+            raise ValueError(f"feature {name!r} is missing")
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError(f"feature {name!r} is not numeric")
+        numeric = float(value)
+        if not math.isfinite(numeric):
+            raise ValueError(f"feature {name!r} is not finite")
+        if numeric < 0.0:
+            raise ValueError(f"feature {name!r} must be non-negative for log1p preprocessing")
+        values.append(math.log1p(numeric))
+    return np.asarray(values, dtype=np.float64)
+
+
+def predict_proba(x: np.ndarray, parameters: list[np.ndarray]) -> np.ndarray:
+    """Return positive-class probability estimates for the logistic model."""
+    weights, bias = parameters
+    logits = np.clip((x @ weights).reshape(-1) + float(bias[0]), -30.0, 30.0)
+    return 1.0 / (1.0 + np.exp(-logits))
+
+
+def save_model_artifact(
+    path: str | Path,
+    *,
+    model_name: str,
+    model_type: str,
+    parameters: list[np.ndarray],
+    feature_names: list[str],
+    training_config: dict[str, Any],
+    dataset_summary: dict[str, Any] | None = None,
+    transforms: list[str] | None = None,
+    preprocessing: dict[str, Any] | None = None,
+) -> Path:
+    """Persist a trained model to a small JSON artifact for later inference."""
+    artifact_path = Path(path)
+    artifact_path.parent.mkdir(parents=True, exist_ok=True)
+    if not feature_names:
+        raise ValueError("feature_names must not be empty")
+    if len(parameters) != 2:
+        raise ValueError("parameters must contain [weights, bias]")
+    weights = np.asarray(parameters[0], dtype=np.float64)
+    bias = np.asarray(parameters[1], dtype=np.float64)
+    if weights.ndim != 1 or bias.ndim != 1 or bias.size != 1:
+        raise ValueError("weights must be 1D and bias must be length-1")
+    if weights.shape[0] != len(feature_names):
+        raise ValueError("stored weights length does not match feature_names")
+    payload = {
+        "artifact_format": "trustmesh_logistic_v1",
+        "model_name": model_name,
+        "model_type": model_type,
+        "feature_names": list(feature_names),
+        "transforms": list(transforms or ["log1p"]),
+        "positive_class": 1,
+        "decision_threshold": 0.5,
+        "score_semantics": "probability of class 1 (attack/malicious)",
+        "preprocessing": preprocessing or {
+            "pipeline": ["log1p"],
+            "fitted_scaler": None,
+            "feature_order": list(feature_names),
+            "notes": "Each selected feature is log1p transformed; no fitted scaler is used in the primary federated/centralized comparison.",
+        },
+        "label_mapping": {"0": "benign", "1": "attack"},
+        "training_config": training_config,
+        "dataset_summary": dataset_summary or {},
+        "parameters": {
+            "weights": weights.tolist(),
+            "bias": bias.tolist(),
+        },
+    }
+    with artifact_path.open("w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2, sort_keys=True)
+    return artifact_path
+
+
+def load_model_artifact(path: str | Path) -> dict[str, Any]:
+    """Load a saved TrustMesh logistic model artifact and validate the metadata."""
+    artifact_path = Path(path)
+    with artifact_path.open("r", encoding="utf-8") as handle:
+        payload = json.load(handle)
+    if payload.get("artifact_format") != "trustmesh_logistic_v1":
+        raise ValueError(f"unsupported artifact format: {payload.get('artifact_format')!r}")
+    feature_names = payload.get("feature_names")
+    if not isinstance(feature_names, list) or not feature_names:
+        raise ValueError("artifact is missing a valid feature_names list")
+    if not isinstance(payload.get("preprocessing"), dict):
+        raise ValueError("artifact is missing preprocessing metadata")
+    parameters = payload.get("parameters")
+    if not isinstance(parameters, dict) or "weights" not in parameters or "bias" not in parameters:
+        raise ValueError("artifact is missing stored model parameters")
+    weights = np.asarray(parameters["weights"], dtype=np.float64)
+    bias = np.asarray(parameters["bias"], dtype=np.float64)
+    if weights.ndim != 1 or bias.ndim != 1 or bias.size != 1:
+        raise ValueError("stored weights or bias shape is invalid")
+    if weights.shape[0] != len(feature_names):
+        raise ValueError("stored weights length does not match feature_names")
+    payload["weights"] = weights
+    payload["bias"] = bias
+    return payload
+
+
+def predict_from_artifact(artifact: dict[str, Any], feature_map: dict[str, Any]) -> tuple[np.ndarray, np.ndarray]:
+    """Apply the preprocessed feature vector to the saved model and return predictions and positive-class probabilities."""
+    if not isinstance(artifact, dict):
+        raise TypeError("artifact must be a dict loaded by load_model_artifact()")
+    feature_names = artifact.get("feature_names")
+    if not isinstance(feature_names, list) or not feature_names:
+        raise ValueError("artifact feature_names metadata is missing")
+    x = prepare_feature_vector(feature_map, feature_names)
+    weights = np.asarray(artifact["weights"], dtype=np.float64)
+    bias = np.asarray(artifact["bias"], dtype=np.float64)
+    parameters = [weights, bias]
+    probabilities = predict_proba(x.reshape(1, -1), parameters)
+    predictions = (probabilities >= 0.5).astype(np.int64)
+    return predictions, probabilities
 
 
 def validate_dp_config(clip_norm: float, noise_multiplier: float, random_seed: int) -> dict[str, float | int]:
@@ -240,6 +386,19 @@ def predict(x: np.ndarray, parameters: list[np.ndarray]) -> np.ndarray:
     return (logits >= 0.0).astype(np.int64)
 
 
+def train_centralized_model(x_train: np.ndarray, y_train: np.ndarray, *, num_features: int | None = None) -> list[np.ndarray]:
+    """Train one pooled logistic-regression model from concatenated client training partitions."""
+    if x_train.ndim != 2:
+        raise ValueError("x_train must be a 2D array of shape (n_samples, n_features)")
+    if y_train.ndim != 1 or len(y_train) != len(x_train):
+        raise ValueError("y_train must be a 1D label array with the same row count as x_train")
+    if num_features is None:
+        num_features = x_train.shape[1]
+    if num_features != x_train.shape[1]:
+        raise ValueError(f"x_train has {x_train.shape[1]} features but num_features={num_features}")
+    return train_parameters(x_train, y_train, zero_parameters(num_features))
+
+
 def classification_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, Any]:
     tn = int(np.sum((y_true == 0) & (y_pred == 0)))
     fp = int(np.sum((y_true == 0) & (y_pred == 1)))
@@ -250,6 +409,9 @@ def classification_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, 
     specificity = tn / (tn + fp) if tn + fp else 0.0
     f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
     return {
+        "positive_class": 1,
+        "decision_threshold": 0.5,
+        "score_semantics": "probability of class 1 (attack/malicious)",
         "confusion_matrix_labels": [0, 1],
         "confusion_matrix": [[tn, fp], [fn, tp]],
         "precision": precision,
@@ -259,11 +421,14 @@ def classification_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, 
     }
 
 
-def run_experiment(client_paths: dict[str, Path] | None = None) -> dict[str, Any]:
+def run_experiment(client_paths: dict[str, str | Path] | None = None) -> dict[str, Any]:
     """Run client-local training and one in-memory Flower FedAvg aggregation round."""
     from flwr.server.strategy import FedAvg
 
-    paths = client_paths or DEFAULT_CLIENTS
+    paths = {
+        client_id: Path(path) if not isinstance(path, Path) else path
+        for client_id, path in (client_paths or DEFAULT_CLIENTS).items()
+    }
     if len(paths) != 2:
         raise ValueError("this controlled proof of concept requires exactly two clients")
 
