@@ -105,3 +105,23 @@ Run the repository tests:
 
 The tests use temporary fixtures for adapters and pipeline behavior and a deterministic temporary JSONL fixture for the one-feature data-loader check. They do not require the ignored smoke artifacts used by the dataset-backed evaluation commands.
 
+## 9. Federated analyst-budget triage benchmark
+
+Run `.venv/bin/python -m scripts.evaluate_federated_triage` to reproduce the local-versus-federated analyst-budget experiment for CTU-SME and UNSW-NB15 across seeds 42, 43, and 44. The experiment evaluates K=25, 50, 100, and 200 using the existing EpisodeRanker, confidence-only ranking, and random ranking.
+
+The evaluator requires the five-feature canonical artifacts listed in Section 2. Shared normalization statistics are fitted on concatenated client training partitions only; evaluation partitions are not used to fit the scaler. This is a controlled simulation using pooled training statistics.
+
+Mean Incident Recall@50:
+
+| Dataset | Local | Federated | Difference |
+|---|---:|---:|---:|
+| CTU-SME | 0.683838 | 0.693228 | +0.009390 |
+| UNSW-NB15 | 0.508486 | 0.501718 | -0.006768 |
+
+Incidents are simulated from dataset labels and fixed 100-source-row windows. These results are not real-world SOC performance; federation modestly improves recall on CTU-SME and modestly reduces it on UNSW-NB15.
+
+## 10. Interpreting the M5/M7 normalization ablation
+
+Reproduce M5 and M7 using the commands in Section 5. In the three-seed smoke-artifact experiment, UNSW-NB15 global F1 was 0.000000 for M5 and 0.694565 for M7 (sample standard deviation 0.005799).
+
+This demonstrates recovery from the all-benign prediction failure under the tested shared-normalization intervention. It does not establish production performance or eliminate all client heterogeneity. The scaler uses pooled client training statistics.
