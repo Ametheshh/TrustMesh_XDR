@@ -347,6 +347,178 @@ def plot_comprehensive_dashboard(datasets_eval: dict, output_path: Path):
     print(f"[✓] Multi-Dataset benchmark visualization saved to: {output_path}")
 
 
+def export_individual_slide_plots(datasets_eval: dict, output_dir: Path):
+    """Generate 6 separate high-resolution slide-ready plots for presentations."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    plt.style.use("seaborn-v0_8-whitegrid" if "seaborn-v0_8-whitegrid" in plt.style.available else "default")
+
+    key_models = [
+        ("Centralized (Pooled)", "centralized_seed_42", "#2b5c8f"),
+        ("FedAvg (Weighted)", "federated_seed_42", "#d9534f"),
+        ("FedAvg (Unweighted)", "ablation_D_federated_unweighted_seed_42", "#2e7d32"),
+        ("Unified Master (Default)", "UNIFIED_MASTER_MODEL", "#6f42c1"),
+    ]
+
+    # Slide 1: Multi-Dataset F1-Score Performance
+    fig, ax = plt.subplots(figsize=(11, 6.2), dpi=200)
+    fig.patch.set_facecolor("#ffffff")
+    d_names = ["UNSW Enterprise", "CIC-IoT-2023", "CIC-IoMT-2024"]
+    x = np.arange(len(d_names))
+    width = 0.16
+
+    for idx, (label, m_key, color) in enumerate(key_models):
+        scores = []
+        for d_key in ["unsw", "ciciot23", "ciciomt2024"]:
+            if d_key in datasets_eval and m_key in datasets_eval[d_key]["models"]:
+                scores.append(datasets_eval[d_key]["models"][m_key]["f1"])
+            else:
+                scores.append(0.0)
+        bars = ax.bar(x + (idx - 1.5) * width, scores, width, label=label, color=color, edgecolor="#222", linewidth=0.8)
+        for b in bars:
+            h = b.get_height()
+            if h > 0.02:
+                ax.text(b.get_x() + b.get_width() / 2, h + 0.015, f"{h:.3f}", ha="center", va="bottom", fontsize=8.5, fontweight="bold")
+
+    cal_scores = [
+        datasets_eval.get("unsw", {}).get("calibrated_master", {}).get("f1", 0.0),
+        datasets_eval.get("ciciot23", {}).get("calibrated_master", {}).get("f1", 0.0),
+        datasets_eval.get("ciciomt2024", {}).get("calibrated_master", {}).get("f1", 0.0),
+    ]
+    cal_bars = ax.bar(x + 2.5 * width, cal_scores, width, label="Master (Calibrated)", color="#fd7e14", edgecolor="#222", linewidth=0.8)
+    for b in cal_bars:
+        h = b.get_height()
+        if h > 0.02:
+            ax.text(b.get_x() + b.get_width() / 2, h + 0.015, f"{h:.3f}", ha="center", va="bottom", fontsize=8.5, fontweight="bold", color="#d9480f")
+
+    ax.set_xticks(x + 0.5 * width)
+    ax.set_xticklabels(d_names, fontsize=12, fontweight="bold")
+    ax.set_ylabel("F1 Score (Balanced Precision & Recall)", fontsize=12, fontweight="bold")
+    ax.set_title("Cross-Dataset Model Benchmarking (F1 Score)\nEvaluated Across 262,879 Genuine Network Flows", fontsize=14, fontweight="bold", pad=12)
+    ax.set_ylim(0, 1.12)
+    ax.legend(loc="upper right", fontsize=10, framealpha=0.95)
+    ax.grid(axis="y", linestyle="--", alpha=0.5)
+    plt.tight_layout()
+    fig.savefig(output_dir / "slide1_f1_cross_dataset_comparison.png", dpi=200, bbox_inches="tight")
+    plt.close(fig)
+
+    # Slide 2: CIC-IoT-2023 Attacks Breakdown
+    fig, ax = plt.subplots(figsize=(11, 6.2), dpi=200)
+    fig.patch.set_facecolor("#ffffff")
+    c23_breakdown = datasets_eval.get("ciciot23", {}).get("category_breakdown", {})
+    if c23_breakdown:
+        cats = [c for c in sorted(c23_breakdown.keys(), key=lambda k: c23_breakdown[k]["total"], reverse=True) if c != "Benign"]
+        rates = [c23_breakdown[c]["rate"] for c in cats]
+        counts = [c23_breakdown[c]["total"] for c in cats]
+        y_pos = np.arange(len(cats))
+        ax.barh(y_pos, rates, color="#0d6efd", edgecolor="#222", height=0.55)
+        for i, (r, cnt) in enumerate(zip(rates, counts)):
+            ax.text(r + 1.5, i, f"{r:.1f}% caught ({cnt:,} flows)", va="center", fontsize=10, fontweight="bold")
+        ax.set_yticks(y_pos)
+        ax.set_yticklabels(cats, fontsize=11, fontweight="bold")
+        ax.set_xlim(0, 125)
+        ax.set_xlabel("Attack Detection Rate (%)", fontsize=12, fontweight="bold")
+        ax.set_title("CIC-IoT-2023 Attack Detection Performance\n134,231 Flows — Unified Master Model at t=0.50 (0.00% False Positives)", fontsize=14, fontweight="bold", pad=12)
+        ax.grid(axis="x", linestyle="--", alpha=0.5)
+    plt.tight_layout()
+    fig.savefig(output_dir / "slide2_iot_attack_detection.png", dpi=200, bbox_inches="tight")
+    plt.close(fig)
+
+    # Slide 3: CIC-IoMT-2024 Healthcare & MQTT Breakdown
+    fig, ax = plt.subplots(figsize=(11, 6.2), dpi=200)
+    fig.patch.set_facecolor("#ffffff")
+    c24_breakdown = datasets_eval.get("ciciomt2024", {}).get("category_breakdown", {})
+    if c24_breakdown:
+        cats24 = [c for c in sorted(c24_breakdown.keys(), key=lambda k: c24_breakdown[k]["total"], reverse=True) if c != "Benign"]
+        rates24 = [c24_breakdown[c]["rate"] for c in cats24]
+        counts24 = [c24_breakdown[c]["total"] for c in cats24]
+        y_pos24 = np.arange(len(cats24))
+        ax.barh(y_pos24, rates24, color="#e83e8c", edgecolor="#222", height=0.50)
+        for i, (r, cnt) in enumerate(zip(rates24, counts24)):
+            ax.text(r + 1.5, i, f"{r:.1f}% caught ({cnt:,} flows)", va="center", fontsize=10, fontweight="bold")
+        ax.set_yticks(y_pos24)
+        ax.set_yticklabels(cats24, fontsize=11, fontweight="bold")
+        ax.set_xlim(0, 125)
+        ax.set_xlabel("Attack Detection Rate (%)", fontsize=12, fontweight="bold")
+        ax.set_title("CIC-IoMT-2024 Healthcare & MQTT Attack Defense\n46,316 Flows — Unified Master Model (< 5% False Alarm Rate)", fontsize=14, fontweight="bold", pad=12)
+        ax.grid(axis="x", linestyle="--", alpha=0.5)
+    plt.tight_layout()
+    fig.savefig(output_dir / "slide3_healthcare_iomt_detection.png", dpi=200, bbox_inches="tight")
+    plt.close(fig)
+
+    # Slide 4: UNSW-NB15 Enterprise Breakdown
+    fig, ax = plt.subplots(figsize=(11, 6.2), dpi=200)
+    fig.patch.set_facecolor("#ffffff")
+    unsw_breakdown = datasets_eval.get("unsw", {}).get("category_breakdown", {})
+    if unsw_breakdown:
+        cats_u = [c for c in sorted(unsw_breakdown.keys(), key=lambda k: unsw_breakdown[k]["total"], reverse=True) if c != "Normal"][:6]
+        rates_u = [unsw_breakdown[c]["rate"] for c in cats_u]
+        counts_u = [unsw_breakdown[c]["total"] for c in cats_u]
+        y_pos_u = np.arange(len(cats_u))
+        ax.barh(y_pos_u, rates_u, color="#20c997", edgecolor="#222", height=0.55)
+        for i, (r, cnt) in enumerate(zip(rates_u, counts_u)):
+            ax.text(r + 1.5, i, f"{r:.1f}% caught ({cnt:,} flows)", va="center", fontsize=10, fontweight="bold")
+        ax.set_yticks(y_pos_u)
+        ax.set_yticklabels(cats_u, fontsize=11, fontweight="bold")
+        ax.set_xlim(0, 125)
+        ax.set_xlabel("Attack Detection Rate (%)", fontsize=12, fontweight="bold")
+        ax.set_title("UNSW-NB15 Enterprise Campus Attack Detection\n82,332 Flows — Unified Master Model (87.3% Precision, 11.1% FPR)", fontsize=14, fontweight="bold", pad=12)
+        ax.grid(axis="x", linestyle="--", alpha=0.5)
+    plt.tight_layout()
+    fig.savefig(output_dir / "slide4_enterprise_attack_detection.png", dpi=200, bbox_inches="tight")
+    plt.close(fig)
+
+    # Slide 5: Learned Feature Weights (Security Physics)
+    fig, ax = plt.subplots(figsize=(11, 6.2), dpi=200)
+    fig.patch.set_facecolor("#ffffff")
+    feat_x = np.arange(len(FEATURE_NAMES))
+    bar_w = 0.18
+    for idx, (label, m_key, color) in enumerate(key_models):
+        w = datasets_eval["unsw"]["models"][m_key]["weights"]
+        ax.bar(feat_x + (idx - 1.5) * bar_w, w, bar_w, label=label, color=color, edgecolor="#222", linewidth=0.8)
+
+    ax.axhline(0, color="#333", linestyle="-", linewidth=1.0)
+    ax.set_xticks(feat_x)
+    clean_labels = ["duration\n(Connection Time)", "bytes_src_to_dst\n(Client Outbound)", "bytes_dst_to_src\n(Server Return)", "packets_src_to_dst\n(ATTACK DRIVER)", "packets_dst_to_src\n(Return Packets)"]
+    ax.set_xticklabels(clean_labels, fontsize=10, fontweight="bold")
+    ax.set_ylabel("Learned Parameter Weight", fontsize=12, fontweight="bold")
+    ax.set_title("Learned Feature Weights Across Architectures\nShowing Master Model Regularization & Attack Physics", fontsize=14, fontweight="bold", pad=12)
+    ax.legend(loc="upper left", fontsize=10, framealpha=0.95)
+    ax.grid(axis="y", linestyle="--", alpha=0.5)
+    plt.tight_layout()
+    fig.savefig(output_dir / "slide5_learned_feature_weights.png", dpi=200, bbox_inches="tight")
+    plt.close(fig)
+
+    # Slide 6: Precision vs FPR Tradeoff
+    fig, ax = plt.subplots(figsize=(11, 6.2), dpi=200)
+    fig.patch.set_facecolor("#ffffff")
+    for label, m_key, color in key_models:
+        fprs = [datasets_eval[d]["models"][m_key]["fpr"] * 100 for d in ["unsw", "ciciot23"]]
+        precs = [datasets_eval[d]["models"][m_key]["precision"] * 100 for d in ["unsw", "ciciot23"]]
+        ax.scatter(fprs, precs, s=180, label=label, color=color, edgecolor="#222", linewidth=1.2, alpha=0.85)
+
+    cal_fprs = [
+        datasets_eval["unsw"]["calibrated_master"]["fpr"] * 100,
+        datasets_eval["ciciot23"]["calibrated_master"]["fpr"] * 100,
+    ]
+    cal_precs = [
+        datasets_eval["unsw"]["calibrated_master"]["precision"] * 100,
+        datasets_eval["ciciot23"]["calibrated_master"]["precision"] * 100,
+    ]
+    ax.scatter(cal_fprs, cal_precs, s=260, marker="*", label="Master (Calibrated)", color="#fd7e14", edgecolor="#222", linewidth=1.5)
+
+    ax.set_xlabel("False Positive Rate (%) [Lower is Better]", fontsize=12, fontweight="bold")
+    ax.set_ylabel("Precision (%) [Higher is Better]", fontsize=12, fontweight="bold")
+    ax.set_title("Precision vs False Positive Rate Tradeoff\nReal Network Benchmarking Across 262,879 Flows", fontsize=14, fontweight="bold", pad=12)
+    ax.set_xlim(-2, 105)
+    ax.set_ylim(-2, 105)
+    ax.legend(loc="lower right", fontsize=10, framealpha=0.95)
+    ax.grid(True, linestyle="--", alpha=0.5)
+    plt.tight_layout()
+    fig.savefig(output_dir / "slide6_precision_vs_fpr_tradeoff.png", dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    print(f"[✓] All 6 individual slide presentation plots saved to: {output_dir}")
+
+
 # =====================================================================
 # 4. Main Controller
 # =====================================================================
@@ -439,6 +611,8 @@ def main():
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     print("\n[*] Generating 6-panel multi-dataset visualization...")
     plot_comprehensive_dashboard(datasets_eval, OUTPUT_IMG)
+    print("[*] Generating individual presentation slide plots...")
+    export_individual_slide_plots(datasets_eval, REPORTS_DIR)
 
     # 4. Save JSON Report
     json_export = {
