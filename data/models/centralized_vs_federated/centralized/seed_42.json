@@ -1,0 +1,68 @@
+{
+  "artifact_format": "trustmesh_logistic_v1",
+  "dataset_summary": {
+    "benchmark": "centralized_vs_federated",
+    "client_names": [
+      "ctu_sme",
+      "unsw_nb15_named"
+    ]
+  },
+  "decision_threshold": 0.5,
+  "feature_names": [
+    "duration",
+    "bytes_src_to_dst",
+    "bytes_dst_to_src",
+    "packets_src_to_dst",
+    "packets_dst_to_src"
+  ],
+  "label_mapping": {
+    "0": "benign",
+    "1": "attack"
+  },
+  "model_name": "centralized_seed_42",
+  "model_type": "centralized_logistic_regression",
+  "parameters": {
+    "bias": [
+      0.47824042665721134
+    ],
+    "weights": [
+      -0.9345890800919762,
+      -0.08727311400096607,
+      -0.7857681811788514,
+      1.500534852190475,
+      0.6461480535110197
+    ]
+  },
+  "positive_class": 1,
+  "preprocessing": {
+    "feature_order": [
+      "duration",
+      "bytes_src_to_dst",
+      "bytes_dst_to_src",
+      "packets_src_to_dst",
+      "packets_dst_to_src"
+    ],
+    "fit_on": "pooled client training partitions only",
+    "notes": "The same canonical five-feature representation and log1p transform are used for centralized and federated models.",
+    "pipeline": [
+      "log1p"
+    ]
+  },
+  "score_semantics": "probability of class 1 (attack/malicious)",
+  "training_config": {
+    "class_weighting": "count-based weights: len(y)/(2*counts) with sample_weights applied across pooled training rows",
+    "decision_threshold": 0.5,
+    "epochs": 500,
+    "l2": 0.0001,
+    "learning_rate": 0.1,
+    "model_family": "class_weighted_logistic_regression",
+    "partition_mode": "stratified train/eval split per client",
+    "positive_class": 1,
+    "score_semantics": "probability of class 1 (attack/malicious)",
+    "seed": 42,
+    "training_protocol": "pooled client training partitions only"
+  },
+  "transforms": [
+    "log1p"
+  ]
+}

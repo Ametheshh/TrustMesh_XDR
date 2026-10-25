@@ -65,8 +65,7 @@ class EpisodeCorrelator:
                     if alert.timestamp is not None and existing_ep.end_time is not None
                     else None
                 )
-                # An explicit correlation key is authoritative; it represents
-                # grouping metadata, not a timestamp or an invented network ID.
+                # shortcut: explicit correlation_key bypasses time_delta for benchmark window assignments; upgrade to window-expiry for production live streams
                 if alert.correlation_key or (time_delta is not None and time_delta <= self.time_window_seconds):
                     existing_ep.add_alert(alert)
                 else:

@@ -1,374 +1,390 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Offline TrustMesh XDR research proof-of-concept results and limitations.">
-  <title>TrustMesh XDR | Research Dashboard</title>
-  <style>
-    :root {
-      color-scheme: light;
-      --ink: #172638;
-      --muted: #526579;
-      --paper: #f3f6f9;
-      --surface: #ffffff;
-      --line: #d9e2ea;
-      --navy: #102b46;
-      --teal: #087e8b;
-      --teal-soft: #e5f5f5;
-      --blue-soft: #edf3fa;
-      --amber: #80510b;
-      --amber-soft: #fff4dc;
-      --red: #8e3434;
-      --red-soft: #fff0ef;
-      --green: #1c654d;
-      --green-soft: #eaf6ef;
-      --shadow: 0 12px 34px rgba(16, 43, 70, .07);
-    }
-
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      margin: 0;
-      background: var(--paper);
-      color: var(--ink);
-      font: 16px/1.55 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-    a { color: #075d78; text-underline-offset: .18em; }
-    a:hover { color: #063e58; }
-    a:focus-visible { outline: 3px solid #f3b747; outline-offset: 3px; }
-    .shell { width: min(1180px, calc(100% - 36px)); margin: 0 auto; }
-    .hero {
-      background: linear-gradient(125deg, #102b46 0%, #154962 65%, #087e8b 100%);
-      color: white;
-      padding: 52px 0 38px;
-    }
-    .eyebrow {
-      margin: 0 0 10px;
-      color: #b8e9e9;
-      font-size: .76rem;
-      font-weight: 800;
-      letter-spacing: .13em;
-      text-transform: uppercase;
-    }
-    h1 { max-width: 850px; margin: 0; font-size: clamp(2.15rem, 5vw, 3.6rem); line-height: 1.05; letter-spacing: -.035em; }
-    .hero-copy { max-width: 780px; margin: 18px 0 0; color: #e1edf4; font-size: 1.08rem; }
-    .status-line { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
-    .pill, .tag {
-      display: inline-flex;
-      align-items: center;
-      border: 1px solid transparent;
-      border-radius: 999px;
-      padding: 5px 11px;
-      font-size: .7rem;
-      font-weight: 800;
-      letter-spacing: .055em;
-      line-height: 1.4;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-    .pill { border-color: rgba(255,255,255,.35); background: rgba(255,255,255,.1); color: white; }
-    .tag.measured { color: #14533f; background: var(--green-soft); border-color: #bfdfcf; }
-    .tag.poc { color: #075766; background: var(--teal-soft); border-color: #b8e2e3; }
-    .tag.limit { color: #793232; background: var(--red-soft); border-color: #f0c9c5; }
-    .tag.context { color: #68440d; background: var(--amber-soft); border-color: #f0d8a2; }
-    .nav-wrap { position: sticky; top: 0; z-index: 5; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.96); }
-    nav { display: flex; gap: 5px; overflow-x: auto; padding: 9px 0; }
-    nav a { flex: 0 0 auto; border-radius: 7px; color: #32485d; font-size: .88rem; font-weight: 700; padding: 8px 12px; text-decoration: none; }
-    nav a:hover { background: var(--blue-soft); color: var(--navy); }
-    main { padding: 28px 0 60px; }
-    section { scroll-margin-top: 72px; margin: 0 0 24px; }
-    .panel { overflow: hidden; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); box-shadow: var(--shadow); }
-    .section-head { padding: 27px 29px 18px; border-bottom: 1px solid #e8edf2; }
-    .section-kicker { margin: 0 0 8px; color: var(--teal); font-size: .72rem; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
-    h2 { margin: 0; color: var(--navy); font-size: clamp(1.45rem, 3vw, 2rem); letter-spacing: -.025em; }
-    h3 { margin: 0 0 8px; color: var(--navy); font-size: 1.04rem; }
-    p { margin: 9px 0; }
-    .section-body { padding: 24px 29px 29px; }
-    .muted { color: var(--muted); }
-    .small { font-size: .88rem; }
-    .grid { display: grid; gap: 14px; }
-    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-    .card { border: 1px solid var(--line); border-radius: 11px; background: #fbfcfd; padding: 19px; }
-    .card p:last-child { margin-bottom: 0; }
-    .stat { display: block; margin: 5px 0 2px; color: var(--navy); font-size: 1.55rem; font-weight: 800; letter-spacing: -.035em; }
-    .stat-label { color: var(--muted); font-size: .84rem; }
-    .kpi-card { display: flex; min-height: 170px; flex-direction: column; align-items: flex-start; gap: 11px; }
-    .kpi-card .stat { margin: 0; font-size: clamp(1.25rem, 2vw, 1.55rem); overflow-wrap: anywhere; }
-    .kpi-card .stat-label { margin-top: auto; }
-    .callout { margin-top: 16px; border-left: 4px solid var(--teal); border-radius: 0 9px 9px 0; background: var(--teal-soft); padding: 13px 16px; }
-    .callout.warning { border-left-color: #bb7b11; background: var(--amber-soft); }
-    .callout.caution { border-left-color: #a64343; background: var(--red-soft); }
-    .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 0 4px; }
-    .flow span { border: 1px solid #cbd8e3; border-radius: 7px; background: white; padding: 7px 10px; font-size: .84rem; font-weight: 700; }
-    .flow b { color: var(--teal); font-size: 1.1rem; }
-    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 9px; }
-    table { width: 100%; border-collapse: collapse; font-size: .84rem; }
-    .results-table { min-width: 990px; table-layout: fixed; }
-    .results-table th:nth-child(1), .results-table td:nth-child(1) { width: 205px; }
-    .results-table th:nth-child(2), .results-table td:nth-child(2) { width: 105px; }
-    .results-table th:nth-child(n+3), .results-table td:nth-child(n+3) { width: 136px; }
-    th, td { padding: 11px 12px; border-bottom: 1px solid #e7edf2; text-align: left; vertical-align: top; }
-    th { background: #edf3f7; color: #30485d; font-size: .75rem; letter-spacing: .035em; white-space: nowrap; }
-    tbody tr:last-child td { border-bottom: 0; }
-    tbody tr:nth-child(even) { background: #fafcfd; }
-    td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
-    .milestone { color: var(--navy); font-weight: 800; white-space: nowrap; }
-    .model { font-weight: 700; white-space: nowrap; }
-    .failure td { background: var(--red-soft); }
-    .mt-md { margin-top: 15px; }
-    .mt-lg { margin-top: 18px; }
-    .spaced-heading { margin-top: 22px; }
-    .card-heading { margin-top: 12px; }
-    .subheading { margin-top: 24px; }
-    .spaced-label { margin-top: 21px; }
-    .link-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 15px; }
-    .link-button { display: inline-flex; border: 1px solid #b7cbd8; border-radius: 8px; background: white; padding: 8px 11px; font-size: .86rem; font-weight: 700; text-decoration: none; }
-    .link-button:hover { background: var(--blue-soft); }
-    .metric-list { display: grid; gap: 11px; }
-    .metric-row { display: grid; grid-template-columns: minmax(145px, 1.25fr) minmax(90px, 2fr) 64px; align-items: center; gap: 12px; }
-    .metric-name { font-size: .88rem; font-weight: 700; overflow-wrap: anywhere; }
-    .bar-track { height: 12px; overflow: hidden; border-radius: 99px; background: #e8eef3; }
-    .bar-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #087e8b, #42a5a5); }
-    .bar-100 { width: 100%; }
-    .bar-60 { width: 60.3%; }
-    .bar-22 { width: 22.4%; }
-    .bar-12 { width: 11.6%; }
-    .bar-7 { width: 7.2%; }
-    .metric-value { color: var(--navy); font-size: .86rem; font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; }
-    .case-label { display: flex; flex-wrap: wrap; align-items: center; column-gap: 12px; row-gap: 8px; margin-bottom: 12px; }
-    .contrib { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; }
-    .contrib span { border: 1px solid #d7e1e9; border-radius: 7px; background: white; padding: 5px 8px; font-size: .78rem; }
-    .positive { color: #126348; }
-    .negative { color: #8e3434; }
-    .privacy-card { min-height: 100%; }
-    .privacy-card.implemented { border-top: 4px solid #2c8a68; }
-    .privacy-card.poc-card { border-top: 4px solid #168596; }
-    .privacy-card.limited { border-top: 4px solid #b44a4a; }
-    footer { padding: 22px 0 34px; color: var(--muted); font-size: .84rem; }
-    code { border-radius: 4px; background: #eef2f5; padding: 2px 5px; font-size: .92em; }
-    @media (max-width: 800px) {
-      .grid.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .grid.three { grid-template-columns: 1fr; }
-      .metric-row { grid-template-columns: minmax(115px, 1fr) minmax(70px, 1.4fr) 58px; gap: 8px; }
-    }
-    @media (max-width: 560px) {
-      .shell { width: min(100% - 22px, 1180px); }
-      .hero { padding: 38px 0 30px; }
-      .section-head { padding: 20px 18px 14px; }
-      .section-body { padding: 18px 18px 22px; }
-      .kpi-card { min-height: 150px; }
-      .grid.two, .grid.four { grid-template-columns: 1fr; }
-      .metric-row { grid-template-columns: 1fr 64px; }
-      .bar-track { grid-column: 1 / -1; grid-row: 2; }
-      .metric-value { grid-column: 2; grid-row: 1; }
-    }
-    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#11120f">
+    <title>TrustMesh XDR | Experimental Operations Console</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #11120f; --panel: #191a16; --panel-raised: #20211c; --line: #44443b;
+            --green: #b6f36a; --amber: #f2b65d; --red: #f16e62; --ink: #f0efe6;
+            --muted: #aaa99c; --dim: #75756b; --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+            --display: "Arial Narrow", "Roboto Condensed", Impact, sans-serif;
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-width: 320px; background-color: var(--bg); color: var(--ink); font-family: system-ui, sans-serif; }
+        body::before { position: fixed; inset: 0; z-index: -1; content: ""; pointer-events: none; opacity: .13;
+            background: repeating-linear-gradient(0deg, transparent 0 3px, #000 4px), linear-gradient(#b6f36a0a 1px, transparent 1px), linear-gradient(90deg, #b6f36a0a 1px, transparent 1px); background-size: auto, 32px 32px, 32px 32px; }
+        button, textarea { font: inherit; }
+        button { color: inherit; }
+        a { color: var(--green); }
+        .shell { width: min(1440px, 100% - 40px); margin: 0 auto; }
+        .topbar { border-bottom: 1px solid var(--line); background: #11120fee; }
+        .topbar-inner { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+        .identity { display: flex; align-items: center; gap: 14px; }
+        .mark { width: 46px; height: 46px; display: grid; place-items: center; border: 2px solid var(--green); color: var(--green); font: 800 13px var(--mono); transform: rotate(-3deg); box-shadow: 4px 4px 0 #b6f36a33; }
+        .eyebrow, .micro { color: var(--muted); font: 700 10px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+        h1, h2, h3, p { margin-top: 0; }
+        h1 { margin-bottom: 3px; font: 800 clamp(22px, 3vw, 30px)/1 var(--display); letter-spacing: .035em; text-transform: uppercase; }
+        .identity p { margin: 0; color: var(--muted); font: 11px var(--mono); }
+        .top-actions { display: flex; align-items: center; gap: 16px; }
+        .status-chip { display: flex; align-items: center; gap: 8px; color: var(--muted); font: 10px var(--mono); text-transform: uppercase; }
+        .status-light { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px #b6f36a66; }
+        .button { min-height: 38px; padding: 8px 13px; border: 1px solid var(--green); background: var(--green); color: #171910; font: 800 11px var(--mono); letter-spacing: .02em; text-transform: uppercase; cursor: pointer; box-shadow: 3px 3px 0 #000; transition: transform .15s, box-shadow .15s, background .15s; }
+        .button:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 #000; }
+        .button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
+        .button:disabled { cursor: wait; opacity: .65; }
+        .button.secondary { border-color: var(--line); background: var(--panel-raised); color: var(--ink); }
+        .button.ghost { border-color: var(--line); background: transparent; color: var(--muted); }
+        .console { padding: 30px 0 48px; }
+        .masthead { display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 260px); align-items: end; gap: 24px; margin: 4px 0 24px; }
+        .masthead h2 { max-width: 760px; margin: 7px 0 0; font: 800 clamp(32px, 6vw, 64px)/.92 var(--display); letter-spacing: -.025em; text-transform: uppercase; }
+        .masthead h2 span { color: var(--green); }
+        .mast-meta { padding: 12px 14px; border-left: 2px solid var(--amber); color: var(--muted); font: 11px/1.8 var(--mono); }
+        .mast-meta strong { color: var(--amber); font-weight: 700; }
+        .layout { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; align-items: start; }
+        .panel { min-width: 0; border: 1px solid var(--line); background: var(--panel); box-shadow: 5px 5px 0 #0008; }
+        .panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 17px 18px; border-bottom: 1px solid var(--line); }
+        .panel-head h2, .panel-head h3 { margin: 4px 0 0; font: 800 20px/1 var(--display); letter-spacing: .04em; text-transform: uppercase; }
+        .panel-index { color: var(--green); font: 11px var(--mono); }
+        .benchmark { grid-column: span 7; }
+        .benchmark-inner { padding: 19px; }
+        .metric-primary { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 16px; padding: 17px; border: 1px solid var(--green); background: #b6f36a0a; }
+        .metric-primary .value { color: var(--green); font: 800 clamp(44px, 7vw, 76px)/.9 var(--mono); letter-spacing: -.08em; }
+        .metric-primary .metric-label { margin-bottom: 9px; color: var(--ink); font: 700 11px var(--mono); text-transform: uppercase; }
+        .metric-note { max-width: 230px; color: var(--muted); font: 10px/1.5 var(--mono); text-align: right; }
+        .metric-deltas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 11px; }
+        .delta { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px; border-left: 2px solid var(--line); background: var(--panel-raised); }
+        .delta-label { color: var(--muted); font: 10px var(--mono); text-transform: uppercase; }
+        .delta-value { color: var(--ink); font: 700 13px var(--mono); }
+        .source-note { margin: 14px 0 0; color: var(--dim); font: 10px/1.5 var(--mono); }
+        .research-note { grid-column: span 5; padding: 19px; border-color: #8e6633; }
+        .research-note h2 { margin: 6px 0 12px; font: 800 23px/1 var(--display); text-transform: uppercase; }
+        .research-note p { margin: 0; color: var(--muted); font: 12px/1.7 var(--mono); }
+        .privacy-line { margin-top: 14px !important; padding-top: 12px; border-top: 1px solid var(--line); color: var(--amber) !important; }
+        .queue { grid-column: span 8; }
+        .queue-tools { display: flex; align-items: center; gap: 14px; }
+        .queue-body { padding: 0 18px 14px; }
+        .disclaimer { display: flex; align-items: center; gap: 9px; margin: 16px 0 11px; padding: 10px 12px; border: 1px solid #8a332d; background: #f16e620c; color: #ff9186; font: 700 10px var(--mono); letter-spacing: .04em; }
+        .disclaimer::before { content: "!"; display: grid; flex: 0 0 17px; height: 17px; place-items: center; border: 1px solid currentColor; }
+        .queue-status { min-height: 20px; margin: 0 0 8px; color: var(--muted); font: 10px var(--mono); }
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { padding: 10px 9px; border-bottom: 1px solid var(--line); color: var(--dim); font: 700 9px var(--mono); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+        td { padding: 12px 9px; border-bottom: 1px solid #383830; color: var(--muted); font: 11px var(--mono); vertical-align: middle; }
+        tbody tr:hover { background: #ffffff06; }
+        .rank { color: var(--dim); }
+        .episode-id { color: var(--green); font-weight: 700; }
+        .risk { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+        .risk::before { width: 7px; height: 7px; content: ""; background: var(--green); }
+        .risk.medium::before { background: var(--amber); }
+        .risk.high::before { background: var(--red); }
+        .inspect { padding: 6px 8px; border: 1px solid var(--line); background: transparent; color: var(--green); font: 700 10px var(--mono); text-transform: uppercase; cursor: pointer; }
+        .inspect:hover { border-color: var(--green); background: #b6f36a0c; }
+        .empty-row { padding: 28px 10px; color: var(--muted); text-align: center; }
+        .cti { grid-column: span 4; }
+        .cti-body { padding: 17px; }
+        .cti-body p { color: var(--muted); font: 11px/1.6 var(--mono); }
+        textarea { width: 100%; min-height: 150px; resize: vertical; padding: 11px; border: 1px solid var(--line); outline: none; background: #10110e; color: var(--green); font: 11px/1.5 var(--mono); }
+        textarea:focus { border-color: var(--green); }
+        .cti-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 10px; }
+        .cti-result { min-height: 20px; margin-top: 12px; color: var(--muted); font: 11px/1.6 var(--mono); overflow-wrap: anywhere; }
+        dialog { width: min(760px, calc(100% - 28px)); max-height: min(84vh, 780px); padding: 0; border: 1px solid var(--green); background: var(--panel); color: var(--ink); box-shadow: 10px 10px 0 #000b; }
+        dialog::backdrop { background: #050604dd; }
+        .inspect-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 17px 19px; border-bottom: 1px solid var(--line); }
+        .inspect-head h2 { margin: 5px 0 0; color: var(--green); font: 800 25px var(--mono); }
+        .inspect-body { max-height: calc(84vh - 80px); overflow-y: auto; padding: 17px 19px; }
+        .detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0 0 18px; }
+        .detail-cell { min-width: 0; padding: 10px; border: 1px solid var(--line); background: #10110e; }
+        .detail-cell dt { color: var(--dim); font: 9px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+        .detail-cell dd { margin: 6px 0 0; color: var(--ink); font: 12px var(--mono); overflow-wrap: anywhere; }
+        .section-label { margin: 0 0 8px; color: var(--amber); font: 700 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+        .alert-list { display: grid; gap: 7px; }
+        .alert-row { display: grid; grid-template-columns: minmax(95px, .7fr) minmax(0, 2fr) auto; gap: 10px; align-items: start; padding: 10px; border-left: 2px solid var(--line); background: #10110e; font: 10px/1.5 var(--mono); }
+        .alert-row strong { color: var(--green); overflow-wrap: anywhere; }
+        .alert-row span { color: var(--muted); overflow-wrap: anywhere; }
+        .footer { padding: 18px 0 0; color: var(--dim); font: 10px var(--mono); }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+        :focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+        @media (max-width: 900px) { .benchmark, .research-note { grid-column: span 12; } .queue { grid-column: span 12; } .cti { grid-column: span 12; } .cti-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; } .cti-body > p { grid-column: 1 / -1; margin: 0; } }
+        @media (max-width: 600px) { .shell { width: min(100% - 24px, 1440px); } .topbar-inner { min-height: 66px; } .top-actions .status-chip { display: none; } .console { padding-top: 23px; } .masthead { grid-template-columns: 1fr; gap: 14px; } .mast-meta { max-width: 300px; } .panel-head { padding: 14px; } .queue-tools { gap: 6px; } .button { min-height: 35px; padding: 7px 9px; font-size: 9px; } .queue-body { padding: 0 12px 12px; } table { min-width: 570px; } .metric-primary { grid-template-columns: 1fr; } .metric-note { text-align: left; max-width: none; } .metric-deltas { grid-template-columns: 1fr; } .cti-body { display: block; } .cti-body > p { margin: 0 0 12px; } .alert-row { grid-template-columns: 1fr auto; } .alert-row span:nth-child(2) { grid-column: 1 / -1; grid-row: 2; } }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } }
+    </style>
 </head>
 <body>
-  <header class="hero">
-    <div class="shell">
-      <p class="eyebrow">Offline cybersecurity research demonstration</p>
-      <h1>TrustMesh XDR</h1>
-      <p class="hero-copy">A research proof of concept for collaborative network-threat detection, with local classifiers, controlled federated evaluations, qualified threat-intelligence artifacts, and one model-explanation example.</p>
-      <div class="status-line" aria-label="Project status">
-        <span class="pill">Research POC</span>
-        <span class="pill">Documented results</span>
-        <span class="pill">Not a live SOC</span>
-      </div>
+<header class="topbar">
+    <div class="shell topbar-inner">
+        <div class="identity">
+            <div class="mark" aria-hidden="true">TXR</div>
+            <div><h1>TrustMesh XDR</h1><p>Experimental cyber-defense console / research build</p></div>
+        </div>
+        <div class="top-actions">
+            <span class="status-chip"><span class="status-light" aria-hidden="true"></span>API-backed view</span>
+            <a class="button secondary" href="/docs">API index ↗</a>
+        </div>
+    </header>
+<main class="shell console">
+    <section class="masthead" aria-labelledby="page-title">
+        <div><div class="eyebrow">Research console / 02—XDR</div><h2 id="page-title">Signals in the <span>dark.</span><br>Evidence in view.</h2></div>
+        <div class="mast-meta"><div>MODE / <strong>OFFLINE RESEARCH</strong></div><div>FEED / <strong>CONTROLLED DEMO</strong></div><div>DATA / REQUEST-DRIVEN</div></div>
+    </section>
+    <div class="layout">
+        <section class="panel benchmark" aria-labelledby="benchmark-title">
+            <div class="panel-head"><div><div class="micro">01 / measured output</div><h2 id="benchmark-title">Federated evaluation</h2></div><span class="panel-index">BENCHMARK</span></div>
+            <div class="benchmark-inner">
+                <div class="metric-primary">
+                    <div><div class="metric-label">CTU-SME Federated Recall@50</div><div class="value" id="kpi-recall" aria-live="polite">Loading…</div></div>
+                    <div class="metric-note">HELD-OUT TRIAGE BENCHMARK<br>NOT LIVE TELEMETRY</div>
+                </div>
+                <div class="metric-deltas">
+                    <div class="delta"><span class="delta-label">Federated Effect / CTU-SME vs Local @50</span><span id="kpi-dedup" class="delta-value" aria-live="polite">Loading…</span></div>
+                    <div class="delta"><span class="delta-label">CTU-SME / Recall Δ @50</span><span id="ctu-delta" class="delta-value">Loading…</span></div>
+                    <div class="delta"><span class="delta-label">UNSW-NB15 / Recall Δ @50</span><span id="unsw-delta" class="delta-value">Loading…</span></div>
+                </div>
+                <p id="metrics-status" class="source-note" role="status">Values load from GET /api/metrics/summary.</p>
+            </div>
+        </section>
+        <aside class="panel research-note" aria-labelledby="scope-title">
+            <div class="micro">02 / scope markers</div><h2 id="scope-title">Keep the signal honest.</h2>
+            <p>Benchmark metrics are fixed results from the documented held-out experiment. The queue below is generated from a local dataset artifact each time the API is requested; it is not saved operational data.</p>
+            <p class="privacy-line">PRIVACY / Experimental clipping + Gaussian perturbation. No formal differential-privacy guarantee.</p>
+        </aside>
+        <section class="panel queue" aria-labelledby="queue-title">
+            <div class="panel-head">
+                <div><div class="micro">03 / generated records</div><h2 id="queue-title">Controlled demonstration triage queue</h2></div>
+                <div class="queue-tools"><span id="queue-count" class="micro" aria-live="polite"></span><button id="refresh-queue" class="button" type="button">↻ Refresh</button></div>
+            </div>
+            <div class="queue-body">
+                <div class="disclaimer">SIMULATED CONTROLLED DEMO — NOT LIVE TELEMETRY</div>
+                <p id="queue-status" class="queue-status" role="status">Loading queue from GET /api/triage/queue…</p>
+                <div class="table-wrap">
+                    <table>
+                        <caption class="sr-only">Ranked episodes generated by the controlled CICIoT23 demonstration</caption>
+                        <thead><tr><th scope="col">Rank</th><th scope="col">Episode ID</th><th scope="col">Demo entity</th><th scope="col">Calculated demo episode risk</th><th scope="col">Alerts</th><th scope="col">Signals</th><th scope="col" aria-label="Inspection"></th></tr></thead>
+                        <tbody id="triage-body"><tr><td colspan="7" class="empty-row">Requesting demo queue…</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+        <section class="panel cti" aria-labelledby="cti-title">
+            <div class="panel-head"><div><div class="micro">04 / local utility</div><h2 id="cti-title">STIX validation</h2></div><span class="panel-index">CTI</span></div>
+            <div class="cti-body">
+                <p>Validate a supplied STIX 2.1 bundle and compare its tactics with the controlled demo queue. No external feed is contacted.</p>
+                <label class="sr-only" for="stix-input">STIX 2.1 bundle JSON</label>
+                <textarea id="stix-input" spellcheck="false" placeholder='{"type":"bundle","id":"bundle--…","objects":[]}'></textarea>
+                <div><div class="cti-actions"><button id="validate-cti" class="button secondary" type="button">Validate bundle</button><span class="micro">LOCAL API</span></div><div id="cti-result" class="cti-result" role="status" aria-live="polite"></div></div>
+            </div>
+        </section>
     </div>
-  </header>
+    <footer class="footer">TrustMesh XDR / research proof of concept / no live telemetry</footer>
+</main>
+<dialog id="episode-modal" aria-labelledby="modal-title">
+    <div class="inspect-head"><div><div class="micro">Episode detail / generated demo record</div><h2 id="modal-title">Inspection</h2></div><button id="close-modal" class="button secondary" type="button" aria-label="Close episode inspection" autofocus>Close ×</button></div>
+    <div id="modal-body" class="inspect-body"></div>
+</dialog>
+<script>
+    const setText = (id, value) => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = value;
+    };
 
-  <div class="nav-wrap">
-    <nav class="shell" aria-label="Dashboard sections">
-      <a href="#overview">Overview</a>
-      <a href="#federated">Federated Learning</a>
-      <a href="#threat-intelligence">Threat Intelligence</a>
-      <a href="#shap">SHAP Explainability</a>
-      <a href="#privacy">Privacy / Limitations</a>
-    </nav>
-  </div>
+        async function fetchMetricsSummary() {
+            try {
+                const res = await fetch('/api/metrics/summary');
+                if (!res.ok) throw new Error(`Metrics API returned ${res.status}`);
+                const data = await res.json();
+                const ctu = data.triage_evaluation?.ctu_sme;
+                const unsw = data.triage_evaluation?.unsw_nb15;
+                if (!data.primary_endpoint || !ctu || !unsw) {
+                    throw new Error("Metrics response is incomplete");
+                }
+                const formatDelta = (federated, local) => {
+                    const delta = (federated - local) * 100;
+                    return `${delta >= 0 ? '+' : '−'}${Math.abs(delta).toFixed(2)} pp`;
+                };
+                setText('kpi-recall', `${(data.primary_endpoint.value * 100).toFixed(2)}%`);
+                setText('kpi-dedup', formatDelta(ctu.federated_recall_at_50, ctu.local_recall_at_50));
+                setText('ctu-delta', formatDelta(ctu.federated_recall_at_50, ctu.local_recall_at_50));
+                setText('unsw-delta', formatDelta(unsw.federated_recall_at_50, unsw.local_recall_at_50));
+                setText('metrics-status', `Source: GET /api/metrics/summary · ${data.primary_endpoint.dataset} / ${data.primary_endpoint.condition} · ${data.primary_endpoint.seeds.join(', ')} · fixed held-out benchmark`);
+            } catch (err) {
+                console.error("Error loading metrics:", err);
+                for (const id of ['kpi-recall', 'kpi-dedup', 'ctu-delta', 'unsw-delta']) {
+                    setText(id, 'Unavailable');
+                }
+                setText('metrics-status', 'Benchmark metrics unavailable from the API.');
+            }
+        }
 
-  <main class="shell">
-    <section id="overview" class="panel" aria-labelledby="overview-title">
-      <div class="section-head">
-        <p class="section-kicker">A · Overview</p>
-        <h2 id="overview-title">An offline research POC</h2>
-      </div>
-      <div class="section-body">
-        <p>This page summarizes already documented experiments and static artifacts. It does not collect telemetry, run models, receive alerts, or display live operational state. CTU-SME and UNSW-NB15 are dataset-derived simulated clients, not real organizations.</p>
-        <div class="grid four mt-lg">
-          <article class="card kpi-card"><span class="tag measured">Measured</span><strong class="stat">M4, M5, M7</strong><span class="stat-label">Held-out local vs global evaluations</span></article>
-          <article class="card kpi-card"><span class="tag poc">Research POC</span><strong class="stat">Flower FedAvg</strong><span class="stat-label">Controlled one-round experiments</span></article>
-          <article class="card kpi-card"><span class="tag poc">Research POC</span><strong class="stat">STIX 2.1</strong><span class="stat-label">One qualified static mapping artifact</span></article>
-          <article class="card kpi-card"><span class="tag poc">Research POC</span><strong class="stat">SHAP</strong><span class="stat-label">One CTU-SME local model explanation</span></article>
-        </div>
-        <h3 class="spaced-heading">Architecture summary</h3>
-        <div class="flow" aria-label="Data pipeline flow">
-          <span>Local source data</span><b aria-hidden="true">→</b>
-          <span>Dataset adapter</span><b aria-hidden="true">→</b>
-          <span>Sanitize and normalize</span><b aria-hidden="true">→</b>
-          <span>Canonical records</span><b aria-hidden="true">→</b>
-          <span>Local / simulated client evaluation</span>
-        </div>
-        <div class="callout warning"><strong>Scope:</strong> This is an offline/research demonstration, not a live SOC, live network monitor, or alerting system. Metrics below are fixed results copied from the linked milestone reports.</div>
-      </div>
-    </section>
+        async function fetchTriageQueue() {
+            const tbody = document.getElementById('triage-body');
+            const status = document.getElementById('queue-status');
+            const button = document.getElementById('refresh-queue');
+            if (!tbody || !status) return;
+            button.disabled = true;
+            status.textContent = 'Refreshing controlled demo queue…';
+            tbody.replaceChildren();
+            try {
+                const res = await fetch('/api/triage/queue');
+                if (!res.ok) throw new Error(`Triage API returned ${res.status}`);
+                const data = await res.json();
+                if (!Array.isArray(data.queue)) throw new Error('Triage response is missing its queue');
+                setText('queue-count', `${data.queue.length} / ${data.top_k_capacity} EPISODES`);
+                if (data.queue.length === 0) {
+                    showQueueMessage('No demo episodes available. Check that the local source artifact is present.');
+                    status.textContent = `No episodes · ${data.data_status || 'unknown source'}`;
+                    return;
+                }
+                data.queue.forEach((item, index) => {
+                    const risk = Number(item.risk_score);
+                    const tr = document.createElement('tr');
+                    const cell = (className, text) => {
+                        const td = document.createElement('td');
+                        td.className = className;
+                        td.textContent = text;
+                        return td;
+                    };
+                    tr.append(cell('rank', String(index + 1).padStart(2, '0')));
+                    tr.append(cell('episode-id', item.episode_id));
+                    tr.append(cell('', item.primary_entity));
+                    const riskCell = document.createElement('td');
+                    const marker = document.createElement('span');
+                    marker.className = `risk${risk >= 0.7 ? ' high' : risk >= 0.4 ? ' medium' : ''}`;
+                    marker.textContent = `${Number.isFinite(risk) ? risk.toFixed(4) : '—'} / calculated demo risk`;
+                    riskCell.append(marker);
+                    tr.append(riskCell, cell('', `${item.alert_count} alerts`));
+                    const tactics = Array.isArray(item.tactics_covered)
+                        ? item.tactics_covered.filter(tactic => tactic !== 'Benign' && tactic !== 'Unknown').join(', ')
+                        : '';
+                    tr.append(cell('', tactics || 'No attack tactic reported'));
+                    const actionCell = document.createElement('td');
+                    const inspect = document.createElement('button');
+                    inspect.className = 'inspect';
+                    inspect.type = 'button';
+                    inspect.textContent = 'Inspect';
+                    inspect.setAttribute('aria-label', `Inspect episode ${item.episode_id}`);
+                    inspect.addEventListener('click', () => inspectEpisode(item.episode_id));
+                    actionCell.append(inspect);
+                    tr.append(actionCell);
+                    tbody.appendChild(tr);
+                });
+                status.textContent = `Source: local CICIoT23 artifact · ${data.data_status || 'controlled demo'} · generated on request; not persisted`;
+            } catch (err) {
+                console.error("Error fetching queue:", err);
+                setText('queue-count', '');
+                showQueueMessage('Queue unavailable. Check the API and local demo artifact, then refresh.');
+                status.textContent = 'Could not load the controlled demo queue.';
+            } finally {
+                button.disabled = false;
+            }
+        }
 
-    <section id="federated" class="panel" aria-labelledby="federated-title">
-      <div class="section-head">
-        <p class="section-kicker">B · Federated Learning</p>
-        <h2 id="federated-title">Local vs global held-out results</h2>
-      </div>
-      <div class="section-body">
-        <div class="case-label"><span class="tag measured">Measured results</span><span class="muted small">Mean ± sample standard deviation across seeds 42, 43, and 44.</span></div>
-        <p class="small muted">Each row is reported within its milestone setup. M4 uses the designated one-feature <code>total_packets</code> POC. M5 uses five mapped connection features with <code>log1p</code>. M7 uses those same five features with one scaler fitted on combined training partitions only. These setups are not silently reconciled into one experiment.</p>
-        <div class="table-wrap">
-          <table class="results-table">
-            <thead><tr><th>Milestone / representation</th><th>Client evaluation</th><th>Model</th><th>Precision</th><th>Recall</th><th>F1</th><th>Balanced accuracy</th></tr></thead>
-            <tbody>
-              <tr><td class="milestone">M4 · total_packets</td><td>CTU-SME</td><td class="model">Local</td><td class="num">0.7868 ± 0.0044</td><td class="num">0.9966 ± 0.0015</td><td class="num">0.8794 ± 0.0032</td><td class="num">0.6851 ± 0.0083</td></tr>
-              <tr><td class="milestone">M4 · total_packets</td><td>CTU-SME</td><td class="model">Global</td><td class="num">0.7868 ± 0.0044</td><td class="num">0.9966 ± 0.0015</td><td class="num">0.8794 ± 0.0032</td><td class="num">0.6851 ± 0.0083</td></tr>
-              <tr><td class="milestone">M4 · total_packets</td><td>UNSW-NB15</td><td class="model">Local</td><td class="num">0.9872 ± 0.0035</td><td class="num">0.5433 ± 0.0106</td><td class="num">0.7009 ± 0.0097</td><td class="num">0.6322 ± 0.0411</td></tr>
-              <tr><td class="milestone">M4 · total_packets</td><td>UNSW-NB15</td><td class="model">Global</td><td class="num">0.9887 ± 0.0021</td><td class="num">0.5409 ± 0.0104</td><td class="num">0.6992 ± 0.0092</td><td class="num">0.6480 ± 0.0255</td></tr>
-              <tr><td class="milestone">M5 · five features, log1p</td><td>CTU-SME</td><td class="model">Local</td><td class="num">0.9958 ± 0.0022</td><td class="num">0.9973 ± 0.0008</td><td class="num">0.9966 ± 0.0015</td><td class="num">0.9938 ± 0.0030</td></tr>
-              <tr><td class="milestone">M5 · five features, log1p</td><td>CTU-SME</td><td class="model">Global</td><td class="num">0.9961 ± 0.0018</td><td class="num">0.9973 ± 0.0008</td><td class="num">0.9967 ± 0.0013</td><td class="num">0.9940 ± 0.0026</td></tr>
-              <tr><td class="milestone">M5 · five features, log1p</td><td>UNSW-NB15</td><td class="model">Local</td><td class="num">0.9894 ± 0.0006</td><td class="num">0.9214 ± 0.0065</td><td class="num">0.9542 ± 0.0033</td><td class="num">0.7634 ± 0.0099</td></tr>
-              <tr class="failure"><td class="milestone">M5 · five features, log1p</td><td>UNSW-NB15</td><td class="model">Global</td><td class="num">0.0000 ± 0.0000</td><td class="num">0.0000 ± 0.0000</td><td class="num">0.0000 ± 0.0000</td><td class="num">0.5000 ± 0.0000</td></tr>
-              <tr><td class="milestone">M7 · five + shared scaler</td><td>CTU-SME</td><td class="model">Local</td><td class="num">0.9905 ± 0.0032</td><td class="num">0.9973 ± 0.0008</td><td class="num">0.9939 ± 0.0018</td><td class="num">0.9874 ± 0.0040</td></tr>
-              <tr><td class="milestone">M7 · five + shared scaler</td><td>CTU-SME</td><td class="model">Global</td><td class="num">0.9879 ± 0.0023</td><td class="num">0.9973 ± 0.0008</td><td class="num">0.9926 ± 0.0014</td><td class="num">0.9843 ± 0.0030</td></tr>
-              <tr><td class="milestone">M7 · five + shared scaler</td><td>UNSW-NB15</td><td class="model">Local</td><td class="num">0.9895 ± 0.0005</td><td class="num">0.9180 ± 0.0078</td><td class="num">0.9524 ± 0.0040</td><td class="num">0.7651 ± 0.0066</td></tr>
-              <tr><td class="milestone">M7 · five + shared scaler</td><td>UNSW-NB15</td><td class="model">Global</td><td class="num">0.9971 ± 0.0026</td><td class="num">0.5329 ± 0.0061</td><td class="num">0.6946 ± 0.0058</td><td class="num">0.7358 ± 0.0299</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="callout caution"><strong>Milestone 5 UNSW result:</strong> the global model predicted all 2,000 held-out rows as benign in each seed. Milestone 7's shared scaler removed the all-benign prediction pattern but did not close the performance gap to the UNSW local model.</div>
-        <article class="card mt-md">
-          <div class="case-label"><span class="tag poc">Milestone 6 diagnosis</span><span class="tag context">Supported diagnosis, not proof</span></div>
-          <p>Different feature distributions and feature-to-label behavior, along with seed-42 coefficient differences and cross-client score behavior, support client heterogeneity as the diagnosis. FedAvg training counts were close: 7,752 CTU-SME rows (49.21%) and 8,000 UNSW-NB15 rows (50.79%). The report does not establish heterogeneity as the sole cause.</p>
-        </article>
-        <div class="link-row">
-          <a class="link-button" href="federated_local_global_milestone4.md">Milestone 4 report</a>
-          <a class="link-button" href="federated_shared_features_milestone5.md">Milestone 5 report</a>
-          <a class="link-button" href="federated_heterogeneity_milestone6.md">Milestone 6 diagnosis</a>
-          <a class="link-button" href="federated_shared_normalization_milestone7.md">Milestone 7 report</a>
-        </div>
-      </div>
-    </section>
+        function showQueueMessage(message) {
+            const row = document.createElement('tr');
+            const cell = document.createElement('td');
+            cell.className = 'empty-row';
+            cell.colSpan = 7;
+            cell.textContent = message;
+            row.append(cell);
+            document.getElementById('triage-body').replaceChildren(row);
+        }
 
-    <section id="threat-intelligence" class="panel" aria-labelledby="threat-title">
-      <div class="section-head">
-        <p class="section-kicker">C · Threat Intelligence</p>
-        <h2 id="threat-title">Qualified label-level mapping</h2>
-      </div>
-      <div class="section-body">
-        <div class="grid two">
-          <article class="card">
-            <span class="tag poc">Static research artifact</span>
-            <h3 class="card-heading">ARP Spoofing</h3>
-            <p><strong>MITRE ATT&amp;CK T1557.002</strong><br>ARP Cache Poisoning</p>
-            <p class="muted small">Source: CICIoMT2024 WiFi and MQTT; source label <code>ARP_Spoofing</code>.</p>
-            <p><strong>Evidence qualification:</strong> dataset-label-derived association only. The project has no packet-level evidence proving ARP cache poisoning; it is not independently verified from packet behavior.</p>
-          </article>
-          <article class="card">
-            <span class="tag limit">Sigma · not generated</span>
-            <h3 class="card-heading">No defensible event condition</h3>
-            <p>The available contract provides dataset labels and aggregate flow features, not packet-level ARP cache-poisoning event fields. A dataset feature name is not automatically a SIEM or log-source field.</p>
-            <p><strong>STIX:</strong> static STIX 2.1 bundle, not an operational exchange service.</p>
-          </article>
-        </div>
-        <div class="link-row">
-          <a class="link-button" href="threat-intelligence/ciciomt2024_arp_spoofing.json">Open ATT&amp;CK mapping JSON</a>
-          <a class="link-button" href="threat-intelligence/ciciomt2024_arp_spoofing.stix.json">Open STIX 2.1 bundle</a>
-        </div>
-      </div>
-    </section>
+        async function inspectEpisode(episodeId) {
+            const modal = document.getElementById('episode-modal');
+            const body = document.getElementById('modal-body');
+            setText('modal-title', episodeId);
+            body.textContent = 'Loading episode details…';
+            if (!modal.open) modal.showModal();
 
-    <section id="shap" class="panel" aria-labelledby="shap-title">
-      <div class="section-head">
-        <p class="section-kicker">D · SHAP Explainability</p>
-        <h2 id="shap-title">What the CTU-SME local model used</h2>
-      </div>
-      <div class="section-body">
-        <div class="case-label"><span class="tag measured">Existing held-out analysis</span><span class="muted small">Mean absolute SHAP contribution, logit units; 200 balanced held-out flows.</span></div>
-        <div class="metric-list" aria-label="Mean absolute SHAP importance">
-          <div class="metric-row"><span class="metric-name">bytes_src_to_dst</span><div class="bar-track"><div class="bar-fill bar-100"></div></div><span class="metric-value">3.675</span></div>
-          <div class="metric-row"><span class="metric-name">bytes_dst_to_src</span><div class="bar-track"><div class="bar-fill bar-60"></div></div><span class="metric-value">2.217</span></div>
-          <div class="metric-row"><span class="metric-name">packets_src_to_dst</span><div class="bar-track"><div class="bar-fill bar-22"></div></div><span class="metric-value">0.825</span></div>
-          <div class="metric-row"><span class="metric-name">duration</span><div class="bar-track"><div class="bar-fill bar-12"></div></div><span class="metric-value">0.426</span></div>
-          <div class="metric-row"><span class="metric-name">packets_dst_to_src</span><div class="bar-track"><div class="bar-fill bar-7"></div></div><span class="metric-value">0.264</span></div>
-        </div>
-        <p class="muted small">This is the existing CTU-SME local five-feature class-weighted Logistic Regression model, seed 42, using <code>log1p</code> inputs. Values summarize this sampled holdout; they are not causal rankings.</p>
-        <h3 class="subheading">Selected held-out contributions</h3>
-        <div class="grid two">
-          <article class="card">
-            <div class="case-label"><span class="tag measured">Correct benign</span></div>
-            <p>Actual 0 · predicted 0 · attack probability 0.0015</p>
-            <div class="contrib"><span class="negative">bytes_src_to_dst: 88 → −3.596</span><span class="negative">bytes_dst_to_src: 144 → −2.178</span><span class="negative">packets_src_to_dst: 2 → −0.898</span></div>
-          </article>
-          <article class="card">
-            <div class="case-label"><span class="tag measured">Correct attack</span></div>
-            <p>Actual 1 · predicted 1 · attack probability 0.9838</p>
-            <div class="contrib"><span class="positive">bytes_src_to_dst: 0 → +2.027</span><span class="positive">bytes_dst_to_src: 0 → +1.213</span><span class="positive">packets_dst_to_src: 0 → +0.129</span></div>
-          </article>
-          <article class="card">
-            <div class="case-label"><span class="tag context">False positive</span></div>
-            <p>Actual 0 · predicted 1 · attack probability 0.9959</p>
-            <div class="contrib"><span class="positive">bytes_src_to_dst: 0 → +2.027</span><span class="positive">bytes_dst_to_src: 0 → +1.213</span><span class="positive">packets_src_to_dst: 8 → +0.838</span></div>
-          </article>
-          <article class="card">
-            <div class="case-label"><span class="tag context">False negative</span></div>
-            <p>Actual 1 · predicted 0 · attack probability 0.0495</p>
-            <div class="contrib"><span class="negative">bytes_src_to_dst: 423 → −5.552</span><span class="negative">bytes_dst_to_src: 888 → −3.414</span><span class="positive">packets_src_to_dst: 34 → +2.984</span></div>
-          </article>
-        </div>
-        <div class="callout"><strong>SHAP explains model behavior; it does not establish causation.</strong> The report covers this CTU-SME local model only, not the UNSW local or federated global model.</div>
-        <div class="link-row"><a class="link-button" href="shap_local_model_examples.md">Open full SHAP report</a></div>
-      </div>
-    </section>
+            try {
+                const res = await fetch(`/api/triage/episode/${encodeURIComponent(episodeId)}`);
+                if (!res.ok) throw new Error(`Episode API returned ${res.status}`);
+                const ep = await res.json();
+                body.replaceChildren();
+                const grid = document.createElement('dl');
+                grid.className = 'detail-grid';
+                const fields = [
+                    ['Primary entity', ep.primary_entity],
+                    ['Calculated demo episode risk', ep.risk_score],
+                    ['Generated start offset', ep.start_time == null ? null : `T+${Number(ep.start_time).toFixed(3)}s`],
+                    ['Generated end offset', ep.end_time == null ? null : `T+${Number(ep.end_time).toFixed(3)}s`],
+                    ['Generated duration', ep.duration == null ? null : `${ep.duration}s`],
+                    ['Evidence diversity', ep.evidence_diversity],
+                    ['Tactics covered', Array.isArray(ep.tactics_covered) ? ep.tactics_covered.join(', ') : null],
+                ];
+                fields.forEach(([label, value]) => {
+                    if (value == null) return;
+                    const item = document.createElement('div');
+                    item.className = 'detail-cell';
+                    const term = document.createElement('dt');
+                    term.textContent = label;
+                    const detail = document.createElement('dd');
+                    detail.textContent = String(value);
+                    item.append(term, detail);
+                    grid.append(item);
+                });
+                body.append(grid);
+                const sectionLabel = document.createElement('h3');
+                sectionLabel.className = 'section-label';
+                sectionLabel.textContent = `Constituent alerts · ${Array.isArray(ep.alerts) ? ep.alerts.length : 0}`;
+                body.append(sectionLabel);
+                const list = document.createElement('div');
+                list.className = 'alert-list';
+                (Array.isArray(ep.alerts) ? ep.alerts : []).forEach(alert => {
+                    const row = document.createElement('div');
+                    row.className = 'alert-row';
+                    const id = document.createElement('strong');
+                    id.textContent = alert.alert_id;
+                    const endpoints = document.createElement('span');
+                    endpoints.textContent = `${alert.src_ip}:${alert.src_port} → ${alert.dst_ip}:${alert.dst_port}`;
+                    const metadata = document.createElement('span');
+                    const offset = alert.timestamp == null ? 'time unavailable' : `T+${Number(alert.timestamp).toFixed(3)}s`;
+                    metadata.textContent = `${offset} · ${alert.tactic} · ${(Number(alert.detection_confidence) * 100).toFixed(1)}% confidence`;
+                    row.append(id, endpoints, metadata);
+                    list.append(row);
+                });
+                body.append(list);
+            } catch (err) {
+                console.error("Error fetching episode:", err);
+                body.textContent = 'Episode details unavailable. Close this inspection and refresh the queue.';
+            }
+        }
 
-    <section id="privacy" class="panel" aria-labelledby="privacy-title">
-      <div class="section-head">
-        <p class="section-kicker">E · Privacy / Limitations</p>
-        <h2 id="privacy-title">Implemented experiments and their limits</h2>
-      </div>
-      <div class="section-body">
-        <div class="case-label"><span class="tag measured">Measured / implemented</span><span class="muted small">Behavior demonstrated by the controlled code path; not a general privacy guarantee.</span></div>
-        <div class="grid three">
-          <article class="card privacy-card implemented">
-            <h3>Local-data boundary</h3>
-            <p>In the networked localhost POC, client records stay in the client process; model arrays, training-example counts, and scalar evaluation summaries are communicated. This is a same-machine simulation.</p>
-          </article>
-          <article class="card privacy-card implemented">
-            <h3>Update clipping / noise</h3>
-            <p>Client-update L2 clipping and seeded Gaussian noise are implemented as an experimental mode. The noise experiment is DP-inspired.</p>
-          </article>
-          <article class="card privacy-card implemented">
-            <h3>Pairwise masking</h3>
-            <p>A deterministic two-client masking experiment is implemented; masks are constructed to cancel under example-count-weighted FedAvg.</p>
-          </article>
-        </div>
-        <div class="case-label spaced-label"><span class="tag poc">Research POC</span></div>
-        <div class="grid two">
-          <article class="card privacy-card poc-card"><h3>DP-inspired clipping + Gaussian noise</h3><p>This is an experimental mechanism only. No privacy accountant or formal epsilon-DP guarantee is implemented.</p></article>
-          <article class="card privacy-card poc-card"><h3>Secure-aggregation masking</h3><p>This is a masking proof of concept, not cryptographic secure aggregation. It provides no cryptographic security guarantee.</p></article>
-        </div>
-        <div class="case-label spaced-label"><span class="tag limit">Limitations</span></div>
-        <div class="grid three">
-          <article class="card privacy-card limited"><h3>No formal privacy guarantee</h3><p>No formal epsilon-DP guarantee and no cryptographic secure-aggregation guarantee.</p></article>
-          <article class="card privacy-card limited"><h3>Simulated clients</h3><p>Clients are dataset-derived simulations, not real organizations.</p></article>
-          <article class="card privacy-card limited"><h3>No live telemetry or alerts</h3><p>This is a static dashboard only; there is no live telemetry, operational TAXII service, or alerting.</p></article>
-        </div>
-        <div class="callout caution"><strong>Performance limitation:</strong> federated performance is not uniformly better across clients. Milestone 5's UNSW global model predicted all evaluation rows benign; the Milestone 7 shared-normalization ablation improved but did not close the gap to the UNSW local model.</div>
-      </div>
-    </section>
+        async function validateCTI() {
+            const input = document.getElementById('stix-input').value;
+            const resDiv = document.getElementById('cti-result');
+            resDiv.textContent = 'Validating bundle…';
 
-    <footer>
-      Values are reproduced from the linked Milestone 4–8 reports and the committed threat-intelligence artifacts. This page contains no live data and uses no external resources. See <a href="../README.md">project README</a> and <a href="reproduction.md">reproduction guide</a>.
-    </footer>
-  </main>
+            try {
+                const bundle = JSON.parse(input);
+                const res = await fetch('/api/cti/validate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ bundle })
+                });
+                if (!res.ok) throw new Error(`CTI API returned ${res.status}`);
+                const data = await res.json();
+                resDiv.textContent = `Validation: ${data.is_valid ? 'VALID STIX 2.1' : 'INVALID'} · Quality ${data.quality_score} · Indicators ${data.indicator_count} · Tactics ${(data.tactics_found || []).join(', ') || 'None'} · Demo relevance ${((data.local_relevance_score || 0) * 100).toFixed(1)}%`;
+            } catch (err) {
+                console.error("Error validating STIX bundle:", err);
+                resDiv.textContent = err instanceof SyntaxError ? `Invalid JSON: ${err.message}` : 'Validation unavailable. Check the bundle and CTI API.';
+            }
+        }
+
+        document.getElementById('refresh-queue').addEventListener('click', fetchTriageQueue);
+        document.getElementById('close-modal').addEventListener('click', () => document.getElementById('episode-modal').close());
+        const modal = document.getElementById('episode-modal');
+        modal.addEventListener('click', event => {
+            if (event.target === event.currentTarget) modal.close();
+        });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && modal.open) modal.close();
+        });
+        document.getElementById('validate-cti').addEventListener('click', validateCTI);
+        fetchMetricsSummary();
+        fetchTriageQueue();
+    </script>
 </body>
 </html>

@@ -1,0 +1,63 @@
+{
+  "artifact_format": "trustmesh_logistic_v1",
+  "dataset_summary": {
+    "benchmark": "class_weighting_ablation",
+    "client_names": [
+      "ctu_sme",
+      "unsw_nb15_named"
+    ]
+  },
+  "decision_threshold": 0.5,
+  "feature_names": [
+    "duration",
+    "bytes_src_to_dst",
+    "bytes_dst_to_src",
+    "packets_src_to_dst",
+    "packets_dst_to_src"
+  ],
+  "label_mapping": {
+    "0": "benign",
+    "1": "attack"
+  },
+  "model_name": "D_federated_unweighted_seed_44",
+  "model_type": "federated_logistic_regression",
+  "parameters": {
+    "bias": [
+      0.6854505132851617
+    ],
+    "weights": [
+      -0.2361621965048279,
+      -0.2552361743123624,
+      -0.317375764114503,
+      0.7543554535263283,
+      -0.11032448468086427
+    ]
+  },
+  "positive_class": 1,
+  "preprocessing": {
+    "feature_order": [
+      "duration",
+      "bytes_src_to_dst",
+      "bytes_dst_to_src",
+      "packets_src_to_dst",
+      "packets_dst_to_src"
+    ],
+    "notes": "Reuses the canonical shared-feature benchmark representation.",
+    "pipeline": [
+      "log1p"
+    ]
+  },
+  "score_semantics": "probability of class 1 (attack/malicious)",
+  "training_config": {
+    "class_weighted": false,
+    "class_weighting_policy": "unit sample weights",
+    "epochs": 500,
+    "l2": 0.0001,
+    "learning_rate": 0.1,
+    "seed": 44,
+    "training_protocol": "local training then one in-memory Flower FedAvg round weighted by training rows"
+  },
+  "transforms": [
+    "log1p"
+  ]
+}

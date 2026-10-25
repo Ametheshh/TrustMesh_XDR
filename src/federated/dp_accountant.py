@@ -57,13 +57,14 @@ class RDPAccountant:
 
         return best_eps
 
-    def generate_privacy_report(self, rounds_list: List[int] = [1, 5, 10, 20]) -> Dict[str, float]:
+    def generate_privacy_report(self, rounds_list: List[int] | None = None) -> Dict[str, float]:
         """Return illustrative epsilon values for hypothetical round counts and delta."""
+        rounds = list(rounds_list) if rounds_list is not None else [1, 5, 10, 20]
         report = {
             "noise_multiplier": self.noise_multiplier,
             "target_delta": self.target_delta,
         }
-        for r in rounds_list:
+        for r in rounds:
             eps = self.compute_epsilon(num_rounds=r)
             report[f"eps_at_round_{r}"] = round(eps, 4)
         return report

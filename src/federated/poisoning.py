@@ -4,12 +4,15 @@ from typing import Tuple
 import numpy as np
 
 
-def apply_label_flipping_attack(y: np.ndarray, flip_ratio: float = 1.0) -> np.ndarray:
+def apply_label_flipping_attack(y: np.ndarray, flip_ratio: float = 1.0, seed: int | None = None) -> np.ndarray:
     """Flip labels (1 -> 0 and 0 -> 1) for a proportion of training samples."""
     y_poisoned = np.copy(y)
     n_flip = int(len(y) * flip_ratio)
     if n_flip > 0:
-        flip_indices = np.random.choice(len(y), size=n_flip, replace=False)
+        if seed is not None:
+            flip_indices = np.random.default_rng(seed).choice(len(y), size=n_flip, replace=False)
+        else:
+            flip_indices = np.random.choice(len(y), size=n_flip, replace=False)
         y_poisoned[flip_indices] = 1 - y_poisoned[flip_indices]
     return y_poisoned
 

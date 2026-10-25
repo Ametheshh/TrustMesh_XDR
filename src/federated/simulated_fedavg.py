@@ -384,10 +384,11 @@ def train_parameters(
     return [weights, np.asarray([bias], dtype=np.float64)]
 
 
-def predict(x: np.ndarray, parameters: list[np.ndarray]) -> np.ndarray:
+def predict(x: np.ndarray, parameters: list[np.ndarray], threshold: float = 0.5) -> np.ndarray:
     weights, bias = parameters
     logits = np.clip((x @ weights).reshape(-1) + float(bias[0]), -30.0, 30.0)
-    return (logits >= 0.0).astype(np.int64)
+    probs = 1.0 / (1.0 + np.exp(-logits))
+    return (probs >= threshold).astype(np.int64)
 
 
 def train_centralized_model(

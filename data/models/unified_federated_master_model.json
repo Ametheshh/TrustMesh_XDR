@@ -1,0 +1,58 @@
+{
+  "artifact_format": "trustmesh_logistic_v1",
+  "model_name": "unified_federated_master_model",
+  "model_type": "unified_multi_domain_federated_logistic_regression",
+  "version": "2.0.0",
+  "decision_threshold": 0.5,
+  "feature_names": [
+    "duration",
+    "bytes_src_to_dst",
+    "bytes_dst_to_src",
+    "packets_src_to_dst",
+    "packets_dst_to_src"
+  ],
+  "label_mapping": {
+    "0": "benign",
+    "1": "attack"
+  },
+  "parameters": {
+    "bias": [
+      0.615493
+    ],
+    "weights": [
+      -0.536008,
+      -0.636102,
+      -0.429405,
+      1.164318,
+      0.079666
+    ]
+  },
+  "participating_domains": [
+    "Bank (UNSW-NB15 Telemetry)",
+    "Enterprise Campus (CTU-SME Zeek Telemetry)",
+    "Hospital & Medical IoT (CICIoMT Telemetry)"
+  ],
+  "aggregated_checkpoint_count": 6,
+  "source_checkpoints": [
+    "data/models/centralized_vs_federated/federated/seed_42.json",
+    "data/models/centralized_vs_federated/federated/seed_43.json",
+    "data/models/centralized_vs_federated/federated/seed_44.json",
+    "data/models/class_weighting_ablation/models/B_federated_local_weighted/seed_42.json",
+    "data/models/class_weighting_ablation/models/B_federated_local_weighted/seed_43.json",
+    "data/models/class_weighting_ablation/models/B_federated_local_weighted/seed_44.json"
+  ],
+  "preprocessing": {
+    "feature_order": [
+      "duration",
+      "bytes_src_to_dst",
+      "bytes_dst_to_src",
+      "packets_src_to_dst",
+      "packets_dst_to_src"
+    ],
+    "pipeline": [
+      "log1p"
+    ],
+    "notes": "Unified canonical 5-feature representation with log1p scaling."
+  },
+  "score_semantics": "probability of class 1 (attack/malicious)"
+}

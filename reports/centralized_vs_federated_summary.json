@@ -1,0 +1,390 @@
+{
+  "artifacts": {
+    "root": "data/models/centralized_vs_federated"
+  },
+  "decision_threshold": 0.5,
+  "features": [
+    "duration",
+    "bytes_src_to_dst",
+    "bytes_dst_to_src",
+    "packets_src_to_dst",
+    "packets_dst_to_src"
+  ],
+  "model_family": "class_weighted binary logistic regression",
+  "per_seed": [
+    {
+      "artifacts": {
+        "centralized": "data/models/centralized_vs_federated/centralized/seed_42.json",
+        "federated": "data/models/centralized_vs_federated/federated/seed_42.json"
+      },
+      "client_metrics": {
+        "ctu_sme": {
+          "centralized": {
+            "balanced_accuracy": 0.9203124821283556,
+            "confusion_matrix": [
+              [
+                488,
+                91
+              ],
+              [
+                3,
+                1356
+              ]
+            ],
+            "confusion_matrix_labels": [
+              0,
+              1
+            ],
+            "decision_threshold": 0.5,
+            "f1": 0.9665003563791875,
+            "false_positive_rate": 0.15716753022452504,
+            "positive_class": 1,
+            "pr_auc": 0.9400429000381196,
+            "precision": 0.9371112646855563,
+            "recall": 0.9977924944812362,
+            "score_semantics": "probability of class 1 (attack/malicious)"
+          },
+          "federated": {
+            "balanced_accuracy": 0.9945784579487356,
+            "confusion_matrix": [
+              [
+                574,
+                5
+              ],
+              [
+                3,
+                1356
+              ]
+            ],
+            "confusion_matrix_labels": [
+              0,
+              1
+            ],
+            "decision_threshold": 0.5,
+            "f1": 0.9970588235294117,
+            "false_positive_rate": 0.008635578583765112,
+            "positive_class": 1,
+            "pr_auc": 0.9829149302595306,
+            "precision": 0.9963262307127112,
+            "recall": 0.9977924944812362,
+            "score_semantics": "probability of class 1 (attack/malicious)"
+          }
+        },
+        "unsw_nb15_named": {
+          "centralized": {
+            "balanced_accuracy": 0.5270871034215839,
+            "confusion_matrix": [
+              [
+                18,
+                31
+              ],
+              [
+                611,
+                1340
+              ]
+            ],
+            "confusion_matrix_labels": [
+              0,
+              1
+            ],
+            "decision_threshold": 0.5,
+            "f1": 0.8067429259482239,
+            "false_positive_rate": 0.6326530612244898,
+            "positive_class": 1,
+            "pr_auc": 0.9845536122240803,
+            "precision": 0.9773887673231219,
+            "recall": 0.6868272680676576,
+            "score_semantics": "probability of class 1 (attack/malicious)"
+          },
+          "federated": {
+            "balanced_accuracy": 0.5,
+            "confusion_matrix": [
+              [
+                49,
+                0
+              ],
+              [
+                1951,
+                0
+              ]
+            ],
+            "confusion_matrix_labels": [
+              0,
+              1
+            ],
+            "decision_threshold": 0.5,
+            "f1": 0.0,
+            "false_positive_rate": 0.0,
+            "positive_class": 1,
+            "pr_auc": 0.9799374144884037,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_semantics": "probability of class 1 (attack/malicious)"
+          }
+        }
+      },
+      "evaluation_rows": {
+        "ctu_sme": 1938,
+        "unsw_nb15_named": 2000
+      },
+      "local_train_rows": {
+        "ctu_sme": 7752,
+        "unsw_nb15_named": 8000
+      },
+      "seed": 42
+    },
+    {
+      "artifacts": {
+        "centralized": "data/models/centralized_vs_federated/centralized/seed_43.json",
+        "federated": "data/models/centralized_vs_federated/federated/seed_43.json"
+      },
+      "client_metrics": {
+        "ctu_sme": {
+          "centralized": {
+            "balanced_accuracy": 0.9299393412559525,
+            "confusion_matrix": [
+              [
+                500,
+                79
+              ],
+              [
+                5,
+                1354
+              ]
+            ],
+            "confusion_matrix_labels": [
+              0,
+              1
+            ],
+            "decision_threshold": 0.5,
+            "f1": 0.9699140401146132,
+            "false_positive_rate": 0.13644214162348878,
+            "positive_class": 1,
+            "pr_auc": 0.9525764982015006,
+            "precision": 0.944870900209351,
+            "recall": 0.9963208241353937,
+            "score_semantics": "probability of class 1 (attack/malicious)"
+          },
+          "federated": {
+            "balanced_accuracy": 0.9912519492006848,
+            "confusion_matrix": [
+              [
+                571,
+                8
+              ],
+              [
+                5,
+                1354
+              ]
+            ],
+            "confusion_matrix_labels": [
+              0,
+              1
+            ],
+            "decision_threshold": 0.5,
+            "f1": 0.9952223447262036,
+            "false_positive_rate": 0.013816925734024179,
+            "positive_class": 1,
+            "pr_auc": 0.9830946564696094,
+            "precision": 0.9941262848751835,
+            "recall": 0.9963208241353937,
+            "score_semantics": "probability of class 1 (attack/malicious)"
+          }
+        },
+        "unsw_nb15_named": {
+          "centralized": {
+            "balanced_accuracy": 0.5781075115848492,
+            "confusion_matrix": [
+              [
+                23,
+                26
+              ],
+              [
+                611,
+                1340
+              ]
+            ],
+            "confusion_matrix_labels": [
+              0,
+              1
+            ],
+            "decision_threshold": 0.5,
+            "f1": 0.8079589990955681,
+            "false_positive_rate": 0.5306122448979592,
+            "positive_class": 1,
+            "pr_auc": 0.9813053160033551,
+            "precision": 0.9809663250366032,
+            "recall": 0.6868272680676576,
+            "score_semantics": "probability of class 1 (attack/malicious)"
+          },
+          "federated": {
+            "balanced_accuracy": 0.5,
+            "confusion_matrix": [
+              [
+                49,
+                0
+              ],
+              [
+                1951,
+                0
+              ]
+            ],
+            "confusion_matrix_labels": [
+              0,
+              1
+            ],
+            "decision_threshold": 0.5,
+            "f1": 0.0,
+            "false_positive_rate": 0.0,
+            "positive_class": 1,
+            "pr_auc": 0.9865334595531572,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_semantics": "probability of class 1 (attack/malicious)"
+          }
+        }
+      },
+      "evaluation_rows": {
+        "ctu_sme": 1938,
+        "unsw_nb15_named": 2000
+      },
+      "local_train_rows": {
+        "ctu_sme": 7752,
+        "unsw_nb15_named": 8000
+      },
+      "seed": 43
+    },
+    {
+      "artifacts": {
+        "centralized": "data/models/centralized_vs_federated/centralized/seed_44.json",
+        "federated": "data/models/centralized_vs_federated/federated/seed_44.json"
+      },
+      "client_metrics": {
+        "ctu_sme": {
+          "centralized": {
+            "balanced_accuracy": 0.9393107550126388,
+            "confusion_matrix": [
+              [
+                510,
+                69
+              ],
+              [
+                3,
+                1356
+              ]
+            ],
+            "confusion_matrix_labels": [
+              0,
+              1
+            ],
+            "decision_threshold": 0.5,
+            "f1": 0.9741379310344828,
+            "false_positive_rate": 0.11917098445595854,
+            "positive_class": 1,
+            "pr_auc": 0.9580757831915104,
+            "precision": 0.9515789473684211,
+            "recall": 0.9977924944812362,
+            "score_semantics": "probability of class 1 (attack/malicious)"
+          },
+          "federated": {
+            "balanced_accuracy": 0.9963055736654886,
+            "confusion_matrix": [
+              [
+                576,
+                3
+              ],
+              [
+                3,
+                1356
+              ]
+            ],
+            "confusion_matrix_labels": [
+              0,
+              1
+            ],
+            "decision_threshold": 0.5,
+            "f1": 0.9977924944812362,
+            "false_positive_rate": 0.0051813471502590676,
+            "positive_class": 1,
+            "pr_auc": 0.9902681218528305,
+            "precision": 0.9977924944812362,
+            "recall": 0.9977924944812362,
+            "score_semantics": "probability of class 1 (attack/malicious)"
+          }
+        },
+        "unsw_nb15_named": {
+          "centralized": {
+            "balanced_accuracy": 0.5227303632883189,
+            "confusion_matrix": [
+              [
+                18,
+                31
+              ],
+              [
+                628,
+                1323
+              ]
+            ],
+            "confusion_matrix_labels": [
+              0,
+              1
+            ],
+            "decision_threshold": 0.5,
+            "f1": 0.8006051437216338,
+            "false_positive_rate": 0.6326530612244898,
+            "positive_class": 1,
+            "pr_auc": 0.9841956012082487,
+            "precision": 0.9771048744460856,
+            "recall": 0.6781137878011276,
+            "score_semantics": "probability of class 1 (attack/malicious)"
+          },
+          "federated": {
+            "balanced_accuracy": 0.5,
+            "confusion_matrix": [
+              [
+                49,
+                0
+              ],
+              [
+                1951,
+                0
+              ]
+            ],
+            "confusion_matrix_labels": [
+              0,
+              1
+            ],
+            "decision_threshold": 0.5,
+            "f1": 0.0,
+            "false_positive_rate": 0.0,
+            "positive_class": 1,
+            "pr_auc": 0.9870224644629009,
+            "precision": 0.0,
+            "recall": 0.0,
+            "score_semantics": "probability of class 1 (attack/malicious)"
+          }
+        }
+      },
+      "evaluation_rows": {
+        "ctu_sme": 1938,
+        "unsw_nb15_named": 2000
+      },
+      "local_train_rows": {
+        "ctu_sme": 7752,
+        "unsw_nb15_named": 8000
+      },
+      "seed": 44
+    }
+  ],
+  "positive_class": 1,
+  "preprocessing": "log1p applied to each feature; no fitted scaler in the primary comparison",
+  "score_semantics": "probability of class 1 (attack/malicious)",
+  "split": {
+    "method": "stratified per client",
+    "seeds": [
+      42,
+      43,
+      44
+    ]
+  }
+}

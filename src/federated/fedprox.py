@@ -75,7 +75,7 @@ def aggregate_fedprox_weights(
         raise ValueError("Cannot aggregate zero client samples")
 
     w_dim = client_updates[0][0].shape[0]
-    w_global = np.zeros(w_dim, dtype=np.float32)
+    w_global = np.zeros(w_dim, dtype=np.float64)
     b_global = 0.0
 
     for w_k, b_k, n_k in client_updates:

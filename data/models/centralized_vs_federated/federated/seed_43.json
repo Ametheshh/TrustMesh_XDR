@@ -1,0 +1,69 @@
+{
+  "artifact_format": "trustmesh_logistic_v1",
+  "dataset_summary": {
+    "benchmark": "centralized_vs_federated",
+    "client_names": [
+      "ctu_sme",
+      "unsw_nb15_named"
+    ]
+  },
+  "decision_threshold": 0.5,
+  "feature_names": [
+    "duration",
+    "bytes_src_to_dst",
+    "bytes_dst_to_src",
+    "packets_src_to_dst",
+    "packets_dst_to_src"
+  ],
+  "label_mapping": {
+    "0": "benign",
+    "1": "attack"
+  },
+  "model_name": "federated_seed_43",
+  "model_type": "federated_logistic_regression",
+  "parameters": {
+    "bias": [
+      0.6097311906273111
+    ],
+    "weights": [
+      -0.5233669770487381,
+      -0.6372267796594666,
+      -0.4323669155650454,
+      1.1701745123364848,
+      0.08724013583547327
+    ]
+  },
+  "positive_class": 1,
+  "preprocessing": {
+    "feature_order": [
+      "duration",
+      "bytes_src_to_dst",
+      "bytes_dst_to_src",
+      "packets_src_to_dst",
+      "packets_dst_to_src"
+    ],
+    "fit_on": "local client training partitions only; aggregation via FedAvg",
+    "notes": "The federated model is the existing Flower FedAvg workflow from the controlled experiment.",
+    "pipeline": [
+      "log1p"
+    ]
+  },
+  "score_semantics": "probability of class 1 (attack/malicious)",
+  "training_config": {
+    "class_weighting": "count-based weights: len(y)/(2*counts) with sample_weights applied within each client local training run",
+    "decision_threshold": 0.5,
+    "epochs": 500,
+    "federation": "Flower FedAvg",
+    "l2": 0.0001,
+    "learning_rate": 0.1,
+    "model_family": "class_weighted_logistic_regression",
+    "partition_mode": "stratified train/eval split per client",
+    "positive_class": 1,
+    "score_semantics": "probability of class 1 (attack/malicious)",
+    "seed": 43,
+    "training_protocol": "local training then one in-memory Flower FedAvg round weighted by training rows"
+  },
+  "transforms": [
+    "log1p"
+  ]
+}
