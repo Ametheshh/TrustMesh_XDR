@@ -258,7 +258,7 @@ def create_visual_report(plot_series: list[dict], datasets_meta: list[tuple[str,
 
     ax1.set_xticks(x)
     ax1.set_xticklabels(ds_labels, fontsize=10, fontweight="bold", color="#0f172a")
-    ax1.set_ylabel("F1-Score (%) — Higher is Better", fontsize=11, fontweight="bold", color="#0f172a")
+    ax1.set_ylabel("F1-Score (%) - Higher is Better", fontsize=11, fontweight="bold", color="#0f172a")
     ax1.set_title("1. Attack Detection Performance (F1-Score)\nHow well each model catches real attacks", fontsize=12, fontweight="bold", color="#0f172a", pad=12)
     ax1.set_ylim(0, 112)
 
@@ -292,7 +292,7 @@ def create_visual_report(plot_series: list[dict], datasets_meta: list[tuple[str,
 
     ax2.set_xticks(x)
     ax2.set_xticklabels(ds_labels, fontsize=10, fontweight="bold", color="#0f172a")
-    ax2.set_ylabel("False Alarm Rate / FPR (%) — Lower is Better", fontsize=11, fontweight="bold", color="#0f172a")
+    ax2.set_ylabel("False Alarm Rate / FPR (%) - Lower is Better", fontsize=11, fontweight="bold", color="#0f172a")
     ax2.set_title("2. False Alarm Rate on Normal Traffic (FPR)\nCentralized models flag 85%-100% of normal traffic as attacks!", fontsize=12, fontweight="bold", color="#b91c1c", pad=12)
     ax2.set_ylim(0, 115)
 
@@ -329,15 +329,19 @@ def create_visual_report(plot_series: list[dict], datasets_meta: list[tuple[str,
 # =========================================================================
 
 def main(run_self_check: bool = False):
+    import sys
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
     print("\n" + "=" * 92)
-    print("  TRUSTMESH XDR — COMPLETE MODEL BENCHMARK (18 SMALL MODELS vs. HUGE FEDERATED MODEL)")
+    print("  TRUSTMESH XDR - COMPLETE MODEL BENCHMARK (18 SMALL MODELS vs. HUGE FEDERATED MODEL)")
     print("=" * 92)
 
     # 1. Explain What Every Model Was Trained On
     print("\n[STEP 1] WHAT EACH MODEL WAS TRAINED ON:")
     print("-" * 92)
     for g in MODEL_GROUPS_META:
-        print(f"  • {g['title']} ({len(g['paths'])} checkpoints)")
+        print(f"  * {g['title'].replace('—', '-')} ({len(g['paths'])} checkpoints)")
         print(f"    - Training Data : {g['trained_on']}")
         print(f"    - Training Mode : {g['how_trained']}")
 
@@ -346,10 +350,10 @@ def main(run_self_check: bool = False):
     master_w = master_json["parameters"]["weights"]
     master_b = float(master_json["parameters"]["bias"][0])
 
-    print("\n  ★ BIG MODEL: Unified Master Federated Model ('Huge Model')")
+    print("\n  [BIG MODEL] Unified Master Federated Model ('Huge Model')")
     print("    - Training Data : Aggregated from 6 domain checkpoints across Enterprise (UNSW-NB15),")
     print("                      Campus Botnet/Zeek (CTU-SME), and Healthcare/IoT traffic.")
-    print("    - Training Mode : Collaborative Federated Averaging (FedAvg) — ZERO raw logs shared.")
+    print("    - Training Mode : Collaborative Federated Averaging (FedAvg) - ZERO raw logs shared.")
 
     # 2. Load Datasets
     print("\n" + "-" * 92)
@@ -388,7 +392,7 @@ def main(run_self_check: bool = False):
         print(f"  [+] CIC-IoMT-2024 (Hospital IoMT) : {len(y_m):>7,} flows ({np.sum(y_m==1):,} attacks, {np.sum(y_m==0):,} benign)")
 
     total_flows = sum(len(d["y"]) for d in datasets.values())
-    print(f"\n  [✓] Total Genuine Network Flows Tested: {total_flows:,}")
+    print(f"\n  [OK] Total Genuine Network Flows Tested: {total_flows:,}")
 
     # 3. Evaluate All 18 Small Models + Master Model on Each Dataset
     print("\n" + "=" * 92)
@@ -424,7 +428,7 @@ def main(run_self_check: bool = False):
         res_m_def = evaluate_weights(X, y, master_w, master_b, threshold=0.50)
         master_default_metrics[d_key] = res_m_def
         print(
-            f"  {'★ HUGE MODEL: Unified Master (Default t=0.50)':<48} | {res_m_def['accuracy']*100:>5.1f}% | "
+            f"  {'* HUGE MODEL: Unified Master (Default t=0.50)':<48} | {res_m_def['accuracy']*100:>5.1f}% | "
             f"{res_m_def['precision']*100:>5.1f}% | {res_m_def['recall']*100:>5.1f}% | {res_m_def['f1']*100:>5.1f}% | "
             f"{res_m_def['fpr']*100:>5.1f}% (0 False Alarms)"
         )
@@ -434,7 +438,7 @@ def main(run_self_check: bool = False):
         res_m_cal = evaluate_weights(X, y, master_w, master_b, threshold=cal_t)
         master_calibrated_metrics[d_key] = res_m_cal
         print(
-            f"  {f'★ HUGE MODEL: Unified Master (Calibrated t={cal_t:.2f})':<48} | {res_m_cal['accuracy']*100:>5.1f}% | "
+            f"  {f'* HUGE MODEL: Unified Master (Calibrated t={cal_t:.2f})':<48} | {res_m_cal['accuracy']*100:>5.1f}% | "
             f"{res_m_cal['precision']*100:>5.1f}% | {res_m_cal['recall']*100:>5.1f}% | {res_m_cal['f1']*100:>5.1f}% | "
             f"{res_m_cal['fpr']*100:>5.1f}%  <-- BEST OVERALL"
         )
@@ -457,7 +461,7 @@ def main(run_self_check: bool = False):
         "highlight": False,
     })
     plot_series.append({
-        "label": "★ Unified Master (Calibrated)\n(BEST OVERALL)",
+        "label": "* Unified Master (Calibrated)\n(BEST OVERALL)",
         "color": "#f59e0b",
         "metrics": master_calibrated_metrics,
         "highlight": True,
@@ -471,7 +475,7 @@ def main(run_self_check: bool = False):
     print("[STEP 4] FINAL VERDICT: WHICH MODEL IS THE BEST AND WHY?")
     print("=" * 92)
     print("""
-  WINNER: ★ The Unified Master Federated Model (Calibrated) + Federated Unweighted ★
+  WINNER: *** The Unified Master Federated Model (Calibrated) + Federated Unweighted ***
 
   Why the Federated Models beat the Centralized Models in real life:
 
@@ -488,21 +492,21 @@ def main(run_self_check: bool = False):
      - Strict Mode (t=0.50): Catches 37.7% of massive IoT DDoS floods with 100% Precision and
        0.0% False Alarms on 19,999 benign flows.
      - Calibrated Mode (t=0.15 Enterprise / t=0.30 IoT / t=0.05 Hospital):
-       • Enterprise (UNSW): 72.9% F1, 87.3% Precision, and cuts False Alarms down to 11.1%
+       * Enterprise (UNSW): 72.9% F1, 87.3% Precision, and cuts False Alarms down to 11.1%
          (compared to 41.7% for Centralized).
-       • Smart IoT (CIC-IoT-2023): 67.1% F1, 93.4% Precision, and cuts False Alarms from
+       * Smart IoT (CIC-IoT-2023): 67.1% F1, 93.4% Precision, and cuts False Alarms from
          100.0% down to 21.1%.
-       • Hospital IoMT (CIC-IoMT-2024): Achieves the highest precision-balanced F1 (28.3%)
+       * Hospital IoMT (CIC-IoMT-2024): Achieves the highest precision-balanced F1 (28.3%)
          while keeping hospital sensor False Alarms at just 4.6%.
 """)
     print("=" * 92)
-    print(f"  [✓] Visual comparison image saved to: {OUTPUT_IMAGE}")
+    print(f"  [OK] Visual comparison image saved to: {OUTPUT_IMAGE}")
     print("=" * 92 + "\n")
 
     if run_self_check:
         assert OUTPUT_IMAGE.exists(), "Comparison image was not created"
         assert total_flows == 262879, f"Expected 262,879 flows, got {total_flows}"
-        print("[✓] Self-check assertions passed.")
+        print("[OK] Self-check assertions passed.")
 
 
 if __name__ == "__main__":
