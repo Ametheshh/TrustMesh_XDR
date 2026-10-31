@@ -1,0 +1,63 @@
+{
+  "artifact_format": "trustmesh_logistic_v1",
+  "dataset_summary": {
+    "benchmark": "class_weighting_ablation",
+    "client_names": [
+      "ctu_sme",
+      "unsw_nb15_named"
+    ]
+  },
+  "decision_threshold": 0.5,
+  "feature_names": [
+    "duration",
+    "bytes_src_to_dst",
+    "bytes_dst_to_src",
+    "packets_src_to_dst",
+    "packets_dst_to_src"
+  ],
+  "label_mapping": {
+    "0": "benign",
+    "1": "attack"
+  },
+  "model_name": "A_centralized_global_weighted_seed_44",
+  "model_type": "centralized_logistic_regression",
+  "parameters": {
+    "bias": [
+      0.4571518301615358
+    ],
+    "weights": [
+      -0.9272620359506814,
+      -0.08093520095741695,
+      -0.7746490686581985,
+      1.4737078244219501,
+      0.6256598413402489
+    ]
+  },
+  "positive_class": 1,
+  "preprocessing": {
+    "feature_order": [
+      "duration",
+      "bytes_src_to_dst",
+      "bytes_dst_to_src",
+      "packets_src_to_dst",
+      "packets_dst_to_src"
+    ],
+    "notes": "Reuses the canonical shared-feature benchmark representation.",
+    "pipeline": [
+      "log1p"
+    ]
+  },
+  "score_semantics": "probability of class 1 (attack/malicious)",
+  "training_config": {
+    "class_weighted": true,
+    "class_weighting_policy": "global pooled class weights",
+    "epochs": 500,
+    "l2": 0.0001,
+    "learning_rate": 0.1,
+    "seed": 44,
+    "training_protocol": "pooled client training partitions only"
+  },
+  "transforms": [
+    "log1p"
+  ]
+}

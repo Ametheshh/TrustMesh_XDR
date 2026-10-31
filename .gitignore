@@ -1,5 +1,7 @@
 # Dataset inputs and generated processing artifacts
-/data/
+/data/*
+!/data/models/
+!/data/models/**
 
 # Python environments, bytecode, and test caches
 .venv/

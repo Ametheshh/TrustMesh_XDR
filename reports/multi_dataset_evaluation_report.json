@@ -1,0 +1,197 @@
+{
+  "summary": "Multi-dataset real network traffic evaluation across 18 small models + Unified Master Model",
+  "total_flows_evaluated": 262879,
+  "datasets": {
+    "unsw": {
+      "name": "UNSW-NB15 (Enterprise)",
+      "total_flows": 82332,
+      "calibrated_master_metrics": {
+        "accuracy": 0.7436962541903512,
+        "precision": 0.8734356698107392,
+        "recall": 0.625077208153181,
+        "f1": 0.7286753928047935,
+        "fpr": 0.11097297297297297,
+        "tp": 28336,
+        "fp": 4106,
+        "tn": 32894,
+        "fn": 16996,
+        "weights": [
+          -0.536008,
+          -0.636102,
+          -0.429405,
+          1.164318,
+          0.079666
+        ],
+        "bias": 0.615493,
+        "mean_atk_prob": 0.15213244588466057,
+        "mean_norm_prob": 0.052559489553697686
+      },
+      "category_breakdown": {
+        "Normal": {
+          "total": 37000,
+          "detected": 4106,
+          "rate": 11.097297297297297
+        },
+        "Generic": {
+          "total": 18871,
+          "detected": 18214,
+          "rate": 96.51846748979916
+        },
+        "Exploits": {
+          "total": 11132,
+          "detected": 2915,
+          "rate": 26.18577075098814
+        },
+        "Fuzzers": {
+          "total": 6062,
+          "detected": 1658,
+          "rate": 27.350709336852525
+        },
+        "DoS": {
+          "total": 4089,
+          "detected": 2741,
+          "rate": 67.03350452433358
+        },
+        "Reconnaissance": {
+          "total": 3496,
+          "detected": 1583,
+          "rate": 45.28032036613273
+        },
+        "Analysis": {
+          "total": 677,
+          "detected": 611,
+          "rate": 90.25110782865583
+        },
+        "Backdoor": {
+          "total": 583,
+          "detected": 508,
+          "rate": 87.13550600343054
+        },
+        "Shellcode": {
+          "total": 378,
+          "detected": 104,
+          "rate": 27.513227513227513
+        },
+        "Worms": {
+          "total": 44,
+          "detected": 2,
+          "rate": 4.545454545454546
+        }
+      }
+    },
+    "ciciot23": {
+      "name": "CIC-IoT-2023 (IoT Attacks)",
+      "total_flows": 134231,
+      "calibrated_master_metrics": {
+        "accuracy": 0.5627686599965731,
+        "precision": 0.9341253712677817,
+        "recall": 0.5231108621051894,
+        "f1": 0.6706546503406247,
+        "fpr": 0.21071053552677635,
+        "tp": 59756,
+        "fp": 4214,
+        "tn": 15785,
+        "fn": 54476,
+        "weights": [
+          -0.536008,
+          -0.636102,
+          -0.429405,
+          1.164318,
+          0.079666
+        ],
+        "bias": 0.615493,
+        "mean_atk_prob": 0.39419223778903206,
+        "mean_norm_prob": 0.20430407432707623
+      },
+      "category_breakdown": {
+        "DDoS": {
+          "total": 45167,
+          "detected": 30345,
+          "rate": 67.18400602209577
+        },
+        "Recon": {
+          "total": 20158,
+          "detected": 8128,
+          "rate": 40.32146046234745
+        },
+        "DoS": {
+          "total": 20098,
+          "detected": 18708,
+          "rate": 93.08388894417355
+        },
+        "Benign": {
+          "total": 19999,
+          "detected": 4214,
+          "rate": 21.071053552677636
+        },
+        "Mirai": {
+          "total": 15147,
+          "detected": 439,
+          "rate": 2.898263682577408
+        },
+        "Spoofing": {
+          "total": 9879,
+          "detected": 1575,
+          "rate": 15.942909201336168
+        },
+        "Web-based": {
+          "total": 2466,
+          "detected": 257,
+          "rate": 10.421735604217357
+        },
+        "BruteForce": {
+          "total": 1317,
+          "detected": 304,
+          "rate": 23.08276385725133
+        }
+      }
+    },
+    "ciciomt2024": {
+      "name": "CIC-IoMT-2024 (Healthcare IoMT)",
+      "total_flows": 46316,
+      "calibrated_master_metrics": {
+        "accuracy": 0.8118792641851628,
+        "precision": 0.49941894247530505,
+        "recall": 0.19738201860144677,
+        "f1": 0.2829396757468521,
+        "fpr": 0.045815938522083655,
+        "tp": 1719,
+        "fp": 1723,
+        "tn": 35884,
+        "fn": 6990,
+        "weights": [
+          -0.536008,
+          -0.636102,
+          -0.429405,
+          1.164318,
+          0.079666
+        ],
+        "bias": 0.615493,
+        "mean_atk_prob": 0.04138769388728192,
+        "mean_norm_prob": 0.03437578572611446
+      },
+      "category_breakdown": {
+        "Benign": {
+          "total": 37607,
+          "detected": 1723,
+          "rate": 4.581593852208366
+        },
+        "Recon-OS_Scan": {
+          "total": 3834,
+          "detected": 1693,
+          "rate": 44.15753781950965
+        },
+        "MQTT-DoS-Connect_Flood": {
+          "total": 3131,
+          "detected": 0,
+          "rate": 0.0
+        },
+        "ARP_Spoofing": {
+          "total": 1744,
+          "detected": 26,
+          "rate": 1.4908256880733946
+        }
+      }
+    }
+  }
+}

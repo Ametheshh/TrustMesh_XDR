@@ -45,7 +45,7 @@ class PersonalizedFLManager:
         n_features = first_profile.X.shape[1]
 
         # Initialize global parameters
-        w_global = np.zeros(n_features, dtype=np.float32)
+        w_global = np.zeros(n_features, dtype=np.float64)
         b_global = 0.0
 
         # Global Aggregation Rounds

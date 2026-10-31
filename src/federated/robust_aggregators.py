@@ -20,6 +20,9 @@ def aggregate_trimmed_mean(
     biases = np.array([b for _, b, _ in client_updates])
 
     k_trim = int(np.floor(n_clients * beta))
+    # If beta > 0 but n_clients * beta < 1, trim 1 if remaining count is at least 1
+    if k_trim == 0 and beta > 0.0 and (n_clients - 2) >= 1:
+        k_trim = 1
 
     if k_trim > 0 and (n_clients - 2 * k_trim) > 0:
         sorted_weights = np.sort(weights_matrix, axis=0)
